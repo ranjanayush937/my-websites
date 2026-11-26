@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Azure data engineering guide for interviews">
+<title>Azure for Data Engineer Interviews</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+  try {
+    const t = localStorage.getItem('azure-guide-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  } catch {}
+</script>
+<header>
+  <button id="menu-btn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
+  <a class="brand" href="#/">Azure Interview Guide</a>
+  <button id="theme-btn" type="button" aria-label="Toggle theme">&#9788;</button>
+</header>
+<div class="layout">
+  <nav id="sidebar" aria-label="Services"></nav>
+  <div id="scrim" hidden></div>
+  <main id="main" tabindex="-1">
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Search services or questions, e.g. 'Delta', 'Event Hubs', 'watermark'" aria-label="Search services" autocomplete="off">
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+<noscript><p style="padding:1rem">This guide needs JavaScript enabled.</p></noscript>
+
+<script src="registry.js"></script>
+<script src="data/prep.js"></script>
+<script src="data/data-eng.js"></script>
+<script src="data/platform.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

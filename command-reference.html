@@ -460,6 +460,68 @@
   }
   .ex-cmd:hover .copy-btn, .ex-cmd .copy-btn:focus { opacity: 1; transform: translateY(0); }
   .ep-empty { color: var(--muted); font-size: .9rem; padding: 1rem 1.1rem; }
+  /* ---------- Refinements ---------- */
+  :root {
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+    --radius: 14px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  html[data-theme="light"] { --shadow: 0 8px 24px rgba(31,41,51,.10); }
+  body {
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(900px 400px at 85% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  header {
+    background: color-mix(in srgb, var(--panel) 78%, transparent);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+    backdrop-filter: saturate(160%) blur(14px);
+  }
+  header h1 {
+    font-weight: 800;
+    letter-spacing: -.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  nav { scrollbar-width: thin; }
+  nav h3 { font-size: .7rem; letter-spacing: .09em; margin: 1.4rem 0 .35rem .5rem; }
+  nav a { border-left: 0; border-radius: 8px; padding: .32rem .65rem; }
+  nav a.active { background: color-mix(in srgb, var(--accent) 14%, transparent); padding-left: .65rem; }
+  #search {
+    padding: .85rem 1.1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  #search:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
+  .cat-head {
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--panel-alt), var(--panel));
+    box-shadow: var(--shadow);
+  }
+  section > h2 { font-size: .82rem; letter-spacing: .08em; }
+  .cmd {
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+  }
+  .cmd:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .cmd h4 { font-size: 1rem; }
+  .cmd .desc { line-height: 1.6; }
+  .cmd .desc strong { color: var(--text); font-family: var(--mono); font-size: .88em; font-weight: 600; }
+  .cmd code.inline, pre code, .ex-step .ex-cmd, .example-panel .ep-head h4 { font-family: var(--mono); }
+  pre { border-radius: 10px; }
+  .badge { text-transform: uppercase; letter-spacing: .06em; font-size: .62rem; padding: .2rem .55rem; }
+  .dd-controls, .example-panel { border-radius: var(--radius); box-shadow: var(--shadow); }
+  .dd-select, .ep-jump { border-radius: 10px; }
+  a:focus-visible, button:focus-visible, select:focus-visible, [role="button"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   @media (max-width: 820px) {
     .layout { flex-direction: column; }
     nav { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
@@ -504,6 +566,7 @@
     <a href="#dbt-debug">debug</a>
     <a href="#dbt-docs">docs</a>
     <a href="#dbt-ls">ls / source</a>
+    <a href="#dbt-util">Project Setup &amp; Utilities</a>
 
     <h3>Git</h3>
     <a href="#git-clone">clone / init</a>
@@ -516,6 +579,8 @@
     <a href="#git-stash">stash</a>
     <a href="#git-reset">reset / revert</a>
     <a href="#git-worktree">worktree / cherry-pick</a>
+    <a href="#git-inspect">Inspect &amp; Recover</a>
+    <a href="#git-files">Files, Tags, Remotes &amp; Config</a>
 
     <h3>Linux</h3>
     <a href="#lx-nav">Navigation</a>
@@ -530,6 +595,8 @@
     <a href="#lx-edit">Editing text</a>
     <a href="#lx-text">Text processing</a>
     <a href="#lx-misc">Shell helpers</a>
+    <a href="#lx-sys">System &amp; Services</a>
+    <a href="#lx-util">Everyday Utilities</a>
   </nav>
 
   <main>
@@ -677,6 +744,58 @@ dbt ls --select +rrd_agent_master_defense --resource-type model</code></pre>
       </div>
     </section>
 
+    <section id="dbt-util">
+      <h2><span class="badge dbt">dbt</span> Project Setup &amp; Utilities</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt init</code> / <code class="inline">dbt clean</code> / <code class="inline">dbt parse</code></h4>
+        <p class="desc"><strong>dbt init</strong> Scaffolds a new dbt project and walks you through creating a connection profile. <strong>dbt clean</strong> Deletes the folders listed under clean-targets in dbt_project.yml, usually target/ and dbt_packages/. <strong>dbt parse</strong> Parses the project and writes target/manifest.json without connecting to the warehouse. Quick way to catch YAML and Jinja errors.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create a new project in a new folder
+dbt init my_project
+# Scaffold without touching your existing profiles.yml
+dbt init my_project --skip-profile-setup
+# Remove compiled artifacts and installed packages
+dbt clean
+# Start from a clean slate, then reinstall packages
+dbt clean &amp;&amp; dbt deps
+# Validate the project structure and refs
+dbt parse
+# Ignore the partial-parse cache after changing dbt_project.yml
+dbt parse --no-partial-parse</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt show</code></h4>
+        <p class="desc">Previews the result of a model or an inline query in the terminal without materializing anything.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Peek at 10 rows from a model
+dbt show --select rrd_agent_master_defense --limit 10
+# Run an ad-hoc query with ref()
+dbt show --inline "select count(*) as n from {{ ref('int_rrd_defence_combined') }}"</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt retry</code> / <code class="inline">dbt clone</code></h4>
+        <p class="desc"><strong>dbt retry</strong> Re-runs the previous dbt command, starting from the nodes that failed or were skipped (dbt 1.6+). <strong>dbt clone</strong> Creates copies of nodes from a previous run&#x27;s state as views or tables in your target schema (dbt 1.6+). Useful for cheap dev environments.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Resume after a failed build without redoing the successful models
+dbt retry
+# Clone prod models into your dev schema using saved prod artifacts
+dbt clone --state prod-artifacts --select rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt run-operation</code></h4>
+        <p class="desc">Runs a macro directly from the command line, for example to grant permissions or clean up old tables.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run a macro with no arguments
+dbt run-operation grant_select_on_marts
+# Pass arguments to the macro as YAML
+dbt run-operation grant_select --args '{role: reporting}'</code></pre>
+      </div>
+    </section>
+
     <!-- ============ GIT ============ -->
     <section id="git-clone">
       <h2><span class="badge git">git</span> Git Version Control</h2>
@@ -801,6 +920,106 @@ git cherry-pick a1b2c3d</code></pre>
     </section>
 
     <!-- ============ LINUX ============ -->
+    <section id="git-inspect">
+      <h2><span class="badge git">git</span> Inspect &amp; Recover</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git show</code> / <code class="inline">git blame</code></h4>
+        <p class="desc"><strong>git show</strong> Displays a commit (message and diff) or a file as it was at a given commit. <strong>git blame</strong> Shows who last changed each line of a file and in which commit.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Show the latest commit
+git show HEAD
+# Summarise files changed in a commit
+git show --stat a1b2c3d
+# View a file as it was two commits ago
+git show HEAD~2:models/mart/schema.yml
+# Annotate a whole file
+git blame models/mart/rrd_agent_master_defense.sql
+# Limit to lines 40-60 and ignore whitespace changes
+git blame -w -L 40,60 models/mart/rrd_agent_master_defense.sql</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git reflog</code> / <code class="inline">git bisect</code></h4>
+        <p class="desc"><strong>git reflog</strong> Lists where HEAD and branches have pointed recently. Lets you recover commits after a bad reset, rebase or deleted branch. <strong>git bisect</strong> Binary-searches your history to find the commit that introduced a bug.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># See recent HEAD movements
+git reflog
+# Recreate a lost branch from a reflog entry
+git branch recovered HEAD@{3}
+# Start and mark the current commit as broken
+git bisect start
+git bisect bad
+# Mark a known-good commit; Git checks out the midpoint
+git bisect good v1.2.0
+# Automate the search with a test script
+git bisect run ./scripts/check.sh
+# Finish and return to your branch
+git bisect reset</code></pre>
+      </div>
+    </section>
+
+    <section id="git-files">
+      <h2><span class="badge git">git</span> Files, Tags, Remotes &amp; Config</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git restore</code> / <code class="inline">git rm</code> / <code class="inline">git mv</code></h4>
+        <p class="desc"><strong>git restore</strong> Discards working-tree changes or unstages files. Replaces the file-level uses of git checkout and git reset. <strong>git rm</strong> Removes a file from the working tree and the index. <strong>git mv</strong> Renames or moves a file and stages the change in one step.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Discard unstaged edits to a file
+git restore models/mart/schema.yml
+# Unstage a file but keep the edits
+git restore --staged models/mart/schema.yml
+# Bring back a file from an earlier commit
+git restore --source=HEAD~1 models/mart/schema.yml
+# Stop tracking a file but keep it on disk
+git rm --cached .env
+# Delete a tracked folder
+git rm -r old_models/
+# Rename a model file
+git mv models/staging/stg_agent.sql models/staging/stg_defence_agent.sql</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git tag</code> / <code class="inline">git remote</code></h4>
+        <p class="desc"><strong>git tag</strong> Marks a specific commit, usually for a release. <strong>git remote</strong> Manages the remote repositories your clone talks to.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create an annotated tag
+git tag -a v1.4.0 -m "Release 1.4.0"
+# List tags
+git tag -l "v1.*"
+# Push one tag to the remote
+git push origin v1.4.0
+# Delete a tag locally
+git tag -d v1.4.0
+# Show remotes and their URLs
+git remote -v
+# Add a second remote called upstream
+git remote add upstream git@github.com:acme/seller-app-defence.git
+# Change the URL of origin
+git remote set-url origin git@github.com:acme/new-name.git
+# Drop local references to branches deleted on the remote
+git remote prune origin</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git config</code> / <code class="inline">git clean</code></h4>
+        <p class="desc"><strong>git config</strong> Reads and sets Git options at the repo, user (--global) or system level. <strong>git clean</strong> Deletes untracked files. Deleted files cannot be recovered, so preview first.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Set your identity
+git config --global user.name "Your Name"
+git config --global user.email you@example.com
+# Create a shortcut
+git config --global alias.st status
+# See every setting and the file it came from
+git config --list --show-origin
+# Dry run: list what would be removed
+git clean -n -d
+# Remove untracked files and folders
+git clean -fd</code></pre>
+      </div>
+    </section>
+
     <section id="lx-nav">
       <h2><span class="badge linux">linux</span> Navigation</h2>
 
@@ -1016,6 +1235,144 @@ ln -s /opt/dbt/profiles.yml ~/.dbt/profiles.yml
 
 # Delete every .log file found, passing them to rm in batches
 find . -name "*.log" | xargs rm -f</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-sys">
+      <h2><span class="badge linux">linux</span> System &amp; Services</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">sudo</code> / <code class="inline">whoami / uname / uptime / date</code></h4>
+        <p class="desc"><strong>sudo</strong> Runs a command with another user&#x27;s privileges, normally root. <strong>whoami / uname / uptime / date</strong> Quick facts about the current user, OS, machine load and time.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run one command as root
+sudo apt update
+# Run as a different user
+sudo -u postgres psql
+# Re-run the previous command as root
+sudo !!
+# Current user
+whoami
+# Kernel and architecture
+uname -a
+# How long the machine has been up, and load average
+uptime
+# ISO date for filenames
+date +%F</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">systemctl</code> / <code class="inline">journalctl</code></h4>
+        <p class="desc"><strong>systemctl</strong> Starts, stops and inspects services on systems that use systemd. <strong>journalctl</strong> Reads logs collected by systemd.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Check a service
+systemctl status nginx
+# Restart it
+sudo systemctl restart nginx
+# Start now and on every boot
+sudo systemctl enable --now nginx
+# Logs for one service from the last hour
+journalctl -u nginx --since "1 hour ago"
+# Follow logs live
+journalctl -u nginx -f
+# Only errors from the current boot
+journalctl -p err -b</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">crontab</code></h4>
+        <p class="desc">Schedules commands to run at fixed times.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># List your jobs
+crontab -l
+# Edit your jobs
+crontab -e
+# Example entry: nightly build at 02:00, logging output
+0 2 * * * cd /opt/dbt &amp;&amp; dbt build &gt;&gt; /var/log/dbt_nightly.log 2&gt;&amp;1</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">lsof</code> / <code class="inline">ss</code> / <code class="inline">watch</code></h4>
+        <p class="desc"><strong>lsof</strong> Lists open files, including network sockets, and the process that owns each. <strong>ss</strong> Shows network sockets. Modern replacement for netstat on Linux. <strong>watch</strong> Re-runs a command every few seconds and shows the output. Not installed by default on macOS.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Which process is using port 8080?
+lsof -i :8080
+# Files opened by a given process
+lsof -p 1234
+# Listening TCP/UDP ports with process names
+sudo ss -tulpn
+# Watch free disk space every 5 seconds
+watch -n 5 df -h</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-util">
+      <h2><span class="badge linux">linux</span> Everyday Utilities</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">tree</code> / <code class="inline">stat</code></h4>
+        <p class="desc"><strong>tree</strong> Prints a directory as an indented tree. Install with brew or apt if missing. <strong>stat</strong> Shows detailed file info: size, permissions, owner, timestamps.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Two levels deep
+tree -L 2
+# Skip noisy folders
+tree -I "target|dbt_packages|.git"
+# Full details
+stat run.sh
+# Octal permissions and owner (Linux)
+stat -c '%a %U' run.sh</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">diff</code> / <code class="inline">tee</code></h4>
+        <p class="desc"><strong>diff</strong> Compares two files or folders line by line. <strong>tee</strong> Copies input to both the screen and a file.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Unified diff of two files
+diff -u old.sql new.sql
+# List files that differ between two folders
+diff -rq models_old/ models/
+# Watch a build and save the log
+dbt build 2&gt;&amp;1 | tee build.log
+# Append to a root-owned file
+echo "10.0.0.5 db.internal" | sudo tee -a /etc/hosts</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">jq</code></h4>
+        <p class="desc">Parses and filters JSON on the command line.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Pretty-print a JSON file
+jq . target/run_results.json
+# List dbt nodes that errored
+jq -r '.results[] | select(.status=="error") | .unique_id' target/run_results.json</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">zip / unzip</code></h4>
+        <p class="desc">Creates and extracts .zip archives, which Windows users can open directly.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Zip a folder
+zip -r backup.zip models/
+# List contents without extracting
+unzip -l backup.zip
+# Extract into a folder
+unzip backup.zip -d restore/</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">alias</code> / <code class="inline">dig</code></h4>
+        <p class="desc"><strong>alias</strong> Defines a shortcut for a longer command. Add it to ~/.zshrc or ~/.bashrc to keep it. <strong>dig</strong> Queries DNS records.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Shortcut for a detailed listing
+alias ll='ls -lah'
+# Shortcut for git status
+alias gs='git status'
+# Remove an alias
+unalias gs
+# Just the IP address
+dig example.com +short
+# Mail servers
+dig MX example.com</code></pre>
       </div>
     </section>
 
@@ -1250,6 +1607,34 @@ find . -name "*.log" | xargs rm -f</code></pre>
           { note: 'Check freshness for one source only', cmd: 'dbt source freshness --select source:raw_defence' },
         ]},
       ]},
+      { name: "Project Setup & Utilities", label: "init / clean / parse / show / retry / clone / run-operation", target: "dbt-util", commands: [
+        { name: "dbt init", desc: "Scaffolds a new dbt project and walks you through creating a connection profile.", steps: [
+          { note: "Create a new project in a new folder", cmd: "dbt init my_project" },
+          { note: "Scaffold without touching your existing profiles.yml", cmd: "dbt init my_project --skip-profile-setup" },
+        ]},
+        { name: "dbt clean", desc: "Deletes the folders listed under clean-targets in dbt_project.yml, usually target/ and dbt_packages/.", steps: [
+          { note: "Remove compiled artifacts and installed packages", cmd: "dbt clean" },
+          { note: "Start from a clean slate, then reinstall packages", cmd: "dbt clean && dbt deps" },
+        ]},
+        { name: "dbt parse", desc: "Parses the project and writes target/manifest.json without connecting to the warehouse. Quick way to catch YAML and Jinja errors.", steps: [
+          { note: "Validate the project structure and refs", cmd: "dbt parse" },
+          { note: "Ignore the partial-parse cache after changing dbt_project.yml", cmd: "dbt parse --no-partial-parse" },
+        ]},
+        { name: "dbt show", desc: "Previews the result of a model or an inline query in the terminal without materializing anything.", steps: [
+          { note: "Peek at 10 rows from a model", cmd: "dbt show --select rrd_agent_master_defense --limit 10" },
+          { note: "Run an ad-hoc query with ref()", cmd: "dbt show --inline \"select count(*) as n from {{ ref('int_rrd_defence_combined') }}\"" },
+        ]},
+        { name: "dbt retry", desc: "Re-runs the previous dbt command, starting from the nodes that failed or were skipped (dbt 1.6+).", steps: [
+          { note: "Resume after a failed build without redoing the successful models", cmd: "dbt retry" },
+        ]},
+        { name: "dbt clone", desc: "Creates copies of nodes from a previous run's state as views or tables in your target schema (dbt 1.6+). Useful for cheap dev environments.", steps: [
+          { note: "Clone prod models into your dev schema using saved prod artifacts", cmd: "dbt clone --state prod-artifacts --select rrd_agent_master_defense" },
+        ]},
+        { name: "dbt run-operation", desc: "Runs a macro directly from the command line, for example to grant permissions or clean up old tables.", steps: [
+          { note: "Run a macro with no arguments", cmd: "dbt run-operation grant_select_on_marts" },
+          { note: "Pass arguments to the macro as YAML", cmd: "dbt run-operation grant_select --args '{role: reporting}'" },
+        ]},
+      ]},
     ]},
     { cat: 'git', label: 'git', groups: [
       { name: 'Start & stage', label: 'clone / init / status / add', target: 'git-clone', commands: [
@@ -1353,6 +1738,62 @@ find . -name "*.log" | xargs rm -f</code></pre>
         { name: 'git cherry-pick', desc: 'Copy a single commit onto the current branch.', steps: [
           { note: 'Apply just one commit from another branch', cmd: 'git cherry-pick a1b2c3d' },
           { note: 'Cherry-pick a range of commits', cmd: 'git cherry-pick a1b2c3d^..e4f5g6h' },
+        ]},
+      ]},
+      { name: "Inspect & Recover", label: "show / blame / reflog / bisect", target: "git-inspect", commands: [
+        { name: "git show", desc: "Displays a commit (message and diff) or a file as it was at a given commit.", steps: [
+          { note: "Show the latest commit", cmd: "git show HEAD" },
+          { note: "Summarise files changed in a commit", cmd: "git show --stat a1b2c3d" },
+          { note: "View a file as it was two commits ago", cmd: "git show HEAD~2:models/mart/schema.yml" },
+        ]},
+        { name: "git blame", desc: "Shows who last changed each line of a file and in which commit.", steps: [
+          { note: "Annotate a whole file", cmd: "git blame models/mart/rrd_agent_master_defense.sql" },
+          { note: "Limit to lines 40-60 and ignore whitespace changes", cmd: "git blame -w -L 40,60 models/mart/rrd_agent_master_defense.sql" },
+        ]},
+        { name: "git reflog", desc: "Lists where HEAD and branches have pointed recently. Lets you recover commits after a bad reset, rebase or deleted branch.", steps: [
+          { note: "See recent HEAD movements", cmd: "git reflog" },
+          { note: "Recreate a lost branch from a reflog entry", cmd: "git branch recovered HEAD@{3}" },
+        ]},
+        { name: "git bisect", desc: "Binary-searches your history to find the commit that introduced a bug.", steps: [
+          { note: "Start and mark the current commit as broken", cmd: "git bisect start\ngit bisect bad" },
+          { note: "Mark a known-good commit; Git checks out the midpoint", cmd: "git bisect good v1.2.0" },
+          { note: "Automate the search with a test script", cmd: "git bisect run ./scripts/check.sh" },
+          { note: "Finish and return to your branch", cmd: "git bisect reset" },
+        ]},
+      ]},
+      { name: "Files, Tags, Remotes & Config", label: "restore / rm / mv / tag / remote / config / clean", target: "git-files", commands: [
+        { name: "git restore", desc: "Discards working-tree changes or unstages files. Replaces the file-level uses of git checkout and git reset.", steps: [
+          { note: "Discard unstaged edits to a file", cmd: "git restore models/mart/schema.yml" },
+          { note: "Unstage a file but keep the edits", cmd: "git restore --staged models/mart/schema.yml" },
+          { note: "Bring back a file from an earlier commit", cmd: "git restore --source=HEAD~1 models/mart/schema.yml" },
+        ]},
+        { name: "git rm", desc: "Removes a file from the working tree and the index.", steps: [
+          { note: "Stop tracking a file but keep it on disk", cmd: "git rm --cached .env" },
+          { note: "Delete a tracked folder", cmd: "git rm -r old_models/" },
+        ]},
+        { name: "git mv", desc: "Renames or moves a file and stages the change in one step.", steps: [
+          { note: "Rename a model file", cmd: "git mv models/staging/stg_agent.sql models/staging/stg_defence_agent.sql" },
+        ]},
+        { name: "git tag", desc: "Marks a specific commit, usually for a release.", steps: [
+          { note: "Create an annotated tag", cmd: "git tag -a v1.4.0 -m \"Release 1.4.0\"" },
+          { note: "List tags", cmd: "git tag -l \"v1.*\"" },
+          { note: "Push one tag to the remote", cmd: "git push origin v1.4.0" },
+          { note: "Delete a tag locally", cmd: "git tag -d v1.4.0" },
+        ]},
+        { name: "git remote", desc: "Manages the remote repositories your clone talks to.", steps: [
+          { note: "Show remotes and their URLs", cmd: "git remote -v" },
+          { note: "Add a second remote called upstream", cmd: "git remote add upstream git@github.com:acme/seller-app-defence.git" },
+          { note: "Change the URL of origin", cmd: "git remote set-url origin git@github.com:acme/new-name.git" },
+          { note: "Drop local references to branches deleted on the remote", cmd: "git remote prune origin" },
+        ]},
+        { name: "git config", desc: "Reads and sets Git options at the repo, user (--global) or system level.", steps: [
+          { note: "Set your identity", cmd: "git config --global user.name \"Your Name\"\ngit config --global user.email you@example.com" },
+          { note: "Create a shortcut", cmd: "git config --global alias.st status" },
+          { note: "See every setting and the file it came from", cmd: "git config --list --show-origin" },
+        ]},
+        { name: "git clean", desc: "Deletes untracked files. Deleted files cannot be recovered, so preview first.", steps: [
+          { note: "Dry run: list what would be removed", cmd: "git clean -n -d" },
+          { note: "Remove untracked files and folders", cmd: "git clean -fd" },
         ]},
       ]},
     ]},
@@ -1556,6 +1997,80 @@ find . -name "*.log" | xargs rm -f</code></pre>
         { name: 'xargs', desc: 'Turn piped input into arguments for another command.', steps: [
           { note: 'Delete every .log file find locates', cmd: 'find . -name "*.log" | xargs rm -f' },
           { note: 'grep across a filtered file list', cmd: 'find models -name "*.sql" | xargs grep -l "full_refresh"' },
+        ]},
+      ]},
+      { name: "System & Services", label: "sudo / systemctl / journalctl / crontab / lsof / ss / watch / uname", target: "lx-sys", commands: [
+        { name: "sudo", desc: "Runs a command with another user's privileges, normally root.", steps: [
+          { note: "Run one command as root", cmd: "sudo apt update" },
+          { note: "Run as a different user", cmd: "sudo -u postgres psql" },
+          { note: "Re-run the previous command as root", cmd: "sudo !!" },
+        ]},
+        { name: "whoami / uname / uptime / date", desc: "Quick facts about the current user, OS, machine load and time.", steps: [
+          { note: "Current user", cmd: "whoami" },
+          { note: "Kernel and architecture", cmd: "uname -a" },
+          { note: "How long the machine has been up, and load average", cmd: "uptime" },
+          { note: "ISO date for filenames", cmd: "date +%F" },
+        ]},
+        { name: "systemctl", desc: "Starts, stops and inspects services on systems that use systemd.", steps: [
+          { note: "Check a service", cmd: "systemctl status nginx" },
+          { note: "Restart it", cmd: "sudo systemctl restart nginx" },
+          { note: "Start now and on every boot", cmd: "sudo systemctl enable --now nginx" },
+        ]},
+        { name: "journalctl", desc: "Reads logs collected by systemd.", steps: [
+          { note: "Logs for one service from the last hour", cmd: "journalctl -u nginx --since \"1 hour ago\"" },
+          { note: "Follow logs live", cmd: "journalctl -u nginx -f" },
+          { note: "Only errors from the current boot", cmd: "journalctl -p err -b" },
+        ]},
+        { name: "crontab", desc: "Schedules commands to run at fixed times.", steps: [
+          { note: "List your jobs", cmd: "crontab -l" },
+          { note: "Edit your jobs", cmd: "crontab -e" },
+          { note: "Example entry: nightly build at 02:00, logging output", cmd: "0 2 * * * cd /opt/dbt && dbt build >> /var/log/dbt_nightly.log 2>&1" },
+        ]},
+        { name: "lsof", desc: "Lists open files, including network sockets, and the process that owns each.", steps: [
+          { note: "Which process is using port 8080?", cmd: "lsof -i :8080" },
+          { note: "Files opened by a given process", cmd: "lsof -p 1234" },
+        ]},
+        { name: "ss", desc: "Shows network sockets. Modern replacement for netstat on Linux.", steps: [
+          { note: "Listening TCP/UDP ports with process names", cmd: "sudo ss -tulpn" },
+        ]},
+        { name: "watch", desc: "Re-runs a command every few seconds and shows the output. Not installed by default on macOS.", steps: [
+          { note: "Watch free disk space every 5 seconds", cmd: "watch -n 5 df -h" },
+        ]},
+      ]},
+      { name: "Everyday Utilities", label: "tree / stat / diff / tee / jq / zip / alias / dig", target: "lx-util", commands: [
+        { name: "tree", desc: "Prints a directory as an indented tree. Install with brew or apt if missing.", steps: [
+          { note: "Two levels deep", cmd: "tree -L 2" },
+          { note: "Skip noisy folders", cmd: "tree -I \"target|dbt_packages|.git\"" },
+        ]},
+        { name: "stat", desc: "Shows detailed file info: size, permissions, owner, timestamps.", steps: [
+          { note: "Full details", cmd: "stat run.sh" },
+          { note: "Octal permissions and owner (Linux)", cmd: "stat -c '%a %U' run.sh" },
+        ]},
+        { name: "diff", desc: "Compares two files or folders line by line.", steps: [
+          { note: "Unified diff of two files", cmd: "diff -u old.sql new.sql" },
+          { note: "List files that differ between two folders", cmd: "diff -rq models_old/ models/" },
+        ]},
+        { name: "tee", desc: "Copies input to both the screen and a file.", steps: [
+          { note: "Watch a build and save the log", cmd: "dbt build 2>&1 | tee build.log" },
+          { note: "Append to a root-owned file", cmd: "echo \"10.0.0.5 db.internal\" | sudo tee -a /etc/hosts" },
+        ]},
+        { name: "jq", desc: "Parses and filters JSON on the command line.", steps: [
+          { note: "Pretty-print a JSON file", cmd: "jq . target/run_results.json" },
+          { note: "List dbt nodes that errored", cmd: "jq -r '.results[] | select(.status==\"error\") | .unique_id' target/run_results.json" },
+        ]},
+        { name: "zip / unzip", desc: "Creates and extracts .zip archives, which Windows users can open directly.", steps: [
+          { note: "Zip a folder", cmd: "zip -r backup.zip models/" },
+          { note: "List contents without extracting", cmd: "unzip -l backup.zip" },
+          { note: "Extract into a folder", cmd: "unzip backup.zip -d restore/" },
+        ]},
+        { name: "alias", desc: "Defines a shortcut for a longer command. Add it to ~/.zshrc or ~/.bashrc to keep it.", steps: [
+          { note: "Shortcut for a detailed listing", cmd: "alias ll='ls -lah'" },
+          { note: "Shortcut for git status", cmd: "alias gs='git status'" },
+          { note: "Remove an alias", cmd: "unalias gs" },
+        ]},
+        { name: "dig", desc: "Queries DNS records.", steps: [
+          { note: "Just the IP address", cmd: "dig example.com +short" },
+          { note: "Mail servers", cmd: "dig MX example.com" },
         ]},
       ]},
     ]},

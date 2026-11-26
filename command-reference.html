@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Command Reference — dbt, Git &amp; Linux</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-alt: #1c2330;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #9da7b3;
+    --accent: #58a6ff;
+    --accent-2: #3fb950;
+    --accent-3: #f0883e;
+    --code-bg: #0b0f14;
+    --code-text: #d2e3ff;
+    --header-bg-start: #161b22;
+    --header-bg-end: #1c2330;
+    --header-h: 64px;
+  }
+  html[data-theme="light"] {
+    --bg: #f6f8fa;
+    --panel: #ffffff;
+    --panel-alt: #eef2f6;
+    --border: #c8d1dc;
+    --text: #1f2933;
+    --muted: #52606d;
+    --accent: #0969da;
+    --accent-2: #1a7f37;
+    --accent-3: #bc4c00;
+    --code-bg: #eef1f4;
+    --code-text: #172b4d;
+    --header-bg-start: #ffffff;
+    --header-bg-end: #eef2f6;
+  }
+  * { box-sizing: border-box; }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  /* Smooth scrollbar styling */
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: #45505e; }
+  html { scrollbar-color: var(--border) var(--bg); scrollbar-width: thin; }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    height: var(--header-h);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: .4rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { margin: 0; font-size: 1.15rem; }
+  header p { margin: .1rem 0 0; color: var(--muted); font-size: .8rem; }
+  .theme-control {
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--muted);
+    font-size: .72rem;
+    font-weight: 600;
+    user-select: none;
+  }
+  .theme-switch {
+    position: relative;
+    width: 46px;
+    height: 24px;
+    display: inline-block;
+  }
+  .theme-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .theme-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: #30363d;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .theme-slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    background: #f6f8fa;
+    box-shadow: 0 1px 3px rgba(0,0,0,.35);
+    transition: transform .2s ease;
+  }
+  .theme-switch input:checked + .theme-slider { background: var(--accent); }
+  .theme-switch input:checked + .theme-slider::before { transform: translateX(22px); }
+  .theme-switch input:focus-visible + .theme-slider { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .theme-icon { font-size: .9rem; line-height: 1; }
+  @media (max-width: 600px) {
+    .theme-control { right: .65rem; }
+    .theme-control .theme-label { display: none; }
+  }
+  .layout { display: flex; max-width: 1200px; margin: 0 auto; }
+  nav {
+    position: sticky;
+    top: var(--header-h);
+    align-self: flex-start;
+    width: 230px;
+    padding: 1.5rem 1rem;
+    height: calc(100vh - var(--header-h));
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+  nav h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 1.2rem 0 .4rem; }
+  nav a {
+    display: block;
+    color: var(--text);
+    text-decoration: none;
+    padding: .3rem .5rem;
+    border-radius: 6px;
+    font-size: .9rem;
+    border-left: 2px solid transparent;
+    transition: background .15s ease, color .15s ease, border-color .15s ease, padding-left .15s ease;
+  }
+  nav a:hover { background: var(--panel-alt); color: var(--accent); }
+  nav a.active {
+    background: var(--panel-alt);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    padding-left: .7rem;
+    font-weight: 600;
+  }
+  main { flex: 1; padding: 1.5rem 2rem 4rem; min-width: 0; }
+  .search-wrap { margin-bottom: 1.5rem; }
+  #search {
+    width: 100%;
+    padding: .7rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+  }
+  #search:focus { outline: none; border-color: var(--accent); }
+  section { margin-bottom: 1.6rem; scroll-margin-top: 1.5rem; }
+  /* Nested group heading (e.g. "Navigation", "Files & Directories") — a sub-level */
+  section > h2 {
+    font-size: .95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted);
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  /* ---- Parent category (dbt / git / linux) — the prominent top level ---- */
+  .cat-block { margin-bottom: 2.5rem; }
+  .cat-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    cursor: pointer;
+    user-select: none;
+    padding: .7rem .9rem;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    margin-bottom: 1.2rem;
+  }
+  .cat-head:hover { border-color: var(--accent); }
+  .cat-head .cat-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em; }
+  .cat-head:hover .cat-title { color: var(--accent); }
+  .cat-head .sec-twist {
+    margin-left: auto;
+    font-size: 1.1rem;
+    color: var(--muted);
+    transition: transform .2s ease;
+  }
+  .cat-block.collapsed .sec-twist { transform: rotate(-90deg); }
+  .cat-block.collapsed .cat-head { margin-bottom: 0; }
+  .cat-block.collapsed .cat-body { display: none; }
+  /* Indent the whole category body so nested groups read as children */
+  .cat-body {
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--border);
+    margin-left: .6rem;
+  }
+  .cat-body > section:last-child { margin-bottom: 0; }
+
+  /* Jump-to-reference button in the example panel */
+  .ep-jump {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0 0 1rem;
+    padding: .5rem .9rem;
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(88,166,255,.1);
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .ep-jump:hover { background: rgba(88,166,255,.2); }
+  .ep-jump:active { transform: translateY(1px); }
+  .badge { font-size: .7rem; padding: .15rem .5rem; border-radius: 20px; font-weight: 600; }
+  .badge.dbt { background: rgba(255,105,79,.15); color: #ff8a6b; }
+  .badge.git { background: rgba(240,136,62,.15); color: var(--accent-3); }
+  .badge.linux { background: rgba(63,185,80,.15); color: var(--accent-2); }
+  .cmd {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: .9rem 0;
+    scroll-margin-top: 1.5rem;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  .cmd:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(0,0,0,.35);
+    transform: translateY(-2px);
+  }
+  .cmd:target {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(88,166,255,.35);
+  }
+  .cmd.flash { animation: cardFlash .5s ease; }
+  @keyframes cardFlash {
+    0%   { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,.55); background: rgba(88,166,255,.10); }
+    100% { border-color: var(--border); box-shadow: none; background: var(--panel); }
+  }
+  .cmd h4 { margin: 0 0 .4rem; font-size: .95rem; }
+  .cmd code.inline {
+    background: var(--code-bg);
+    color: var(--accent);
+    padding: .1rem .4rem;
+    border-radius: 5px;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: .95rem;
+  }
+  .cmd .desc { color: var(--muted); margin: .2rem 0 .7rem; }
+  .cmd .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: .6rem 0 .2rem; }
+  pre {
+    position: relative;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .8rem 1rem;
+    margin: .3rem 0 0;
+    overflow-x: auto;
+  }
+  pre code { font-family: "SF Mono", Consolas, Monaco, monospace; font-size: .88rem; color: var(--code-text); white-space: pre; }
+  .example { border-left: 3px solid var(--accent-2); }
+  .hidden { display: none !important; }
+  /* Copy-to-clipboard button */
+  .copy-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    padding: .25rem .6rem;
+    font-size: .72rem;
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity .15s ease, transform .15s ease, color .15s ease, border-color .15s ease, background .15s ease;
+  }
+  pre:hover .copy-btn, .copy-btn:focus { opacity: 1; transform: translateY(0); }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .copy-btn.copied { color: var(--accent-2); border-color: var(--accent-2); background: rgba(63,185,80,.12); opacity: 1; }
+  /* Search match highlight */
+  mark {
+    background: rgba(240,136,62,.35);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 0 .1em;
+  }
+  /* Result counter */
+  #result-count { color: var(--muted); font-size: .8rem; margin-top: .5rem; min-height: 1em; }
+  /* Reveal-on-scroll */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal.shown { opacity: 1; transform: none; }
+  /* Back to top */
+  #to-top {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--accent);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(.9);
+    transition: opacity .25s ease, transform .25s ease, background .2s ease;
+    z-index: 90;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+  #to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+  #to-top:hover { background: var(--panel-alt); }
+  /* Keyboard hint in search box */
+  .search-wrap { position: relative; }
+  .kbd-hint {
+    position: absolute;
+    top: 50%;
+    right: .8rem;
+    transform: translateY(-50%);
+    font-size: .72rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: .1rem .4rem;
+    pointer-events: none;
+    background: var(--panel-alt);
+  }
+  /* ---------- Command dropdowns ---------- */
+  #graph-section { margin-bottom: 2.5rem; }
+  .graph-intro { color: var(--muted); margin: .2rem 0 1rem; font-size: .92rem; }
+  .dd-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+  }
+  .dd-field { display: flex; flex-direction: column; gap: .35rem; flex: 1 1 200px; min-width: 180px; }
+  .dd-field label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+  .dd-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: .6rem 2.2rem .6rem .8rem;
+    background-color: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .92rem;
+    font-family: inherit;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%239da7b3' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right .8rem center;
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  .dd-select:hover { border-color: var(--accent); }
+  .dd-select:focus { outline: none; border-color: var(--accent); }
+  .dd-select:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Structured example panel */
+  .example-panel {
+    margin-top: 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .example-panel .ep-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .8rem 1.1rem;
+    background: var(--panel-alt);
+    border-bottom: 1px solid var(--border);
+  }
+  .example-panel .ep-head h4 { margin: 0; font-size: 1rem; font-family: "SF Mono", Consolas, Monaco, monospace; color: var(--accent); }
+  .example-panel .ep-head h4.ep-link { cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
+  .example-panel .ep-head h4.ep-link::after {
+    content: "\2193";
+    font-size: .85em;
+    opacity: .7;
+    transition: transform .15s ease, opacity .15s ease;
+  }
+  .example-panel .ep-head h4.ep-link:hover { text-decoration: underline; }
+  .example-panel .ep-head h4.ep-link:hover::after { transform: translateY(2px); opacity: 1; }
+  .example-panel .ep-head h4.ep-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .example-panel .ep-head .ep-path { color: var(--muted); font-size: .78rem; margin-left: auto; }
+  .example-panel .ep-body { padding: 1rem 1.1rem; }
+  .example-panel .ep-desc { color: var(--muted); margin: 0 0 1rem; font-size: .9rem; }
+  .ex-step {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: .2rem .6rem;
+    margin: 0 0 .9rem;
+    align-items: start;
+  }
+  .ex-step:last-child { margin-bottom: 0; }
+  .ex-step .ex-num {
+    grid-row: span 2;
+    width: 1.6rem; height: 1.6rem;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--accent-2);
+    font-size: .75rem;
+    font-weight: 700;
+  }
+  .ex-step .ex-note { color: var(--muted); font-size: .85rem; }
+  .ex-step .ex-cmd {
+    position: relative;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: .5rem 4rem .5rem .7rem;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: .85rem;
+    color: var(--code-text);
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .ex-cmd:hover .copy-btn, .ex-cmd .copy-btn:focus { opacity: 1; transform: translateY(0); }
+  .ep-empty { color: var(--muted); font-size: .9rem; padding: 1rem 1.1rem; }
+  @media (max-width: 820px) {
+    .layout { flex-direction: column; }
+    nav { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<script>
+  try {
+    const savedTheme = localStorage.getItem('command-reference-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+  } catch {}
+</script>
+<header>
+  <div class="theme-control" title="Switch between dark and light theme">
+    <span class="theme-icon" aria-hidden="true">☾</span>
+    <span class="theme-label">Dark</span>
+    <label class="theme-switch" aria-label="Toggle light theme">
+      <input id="theme-toggle" type="checkbox" />
+      <span class="theme-slider"></span>
+    </label>
+    <span class="theme-icon" aria-hidden="true">☀</span>
+  </div>
+  <h1>Command Reference</h1>
+  <p>dbt, Git &amp; Linux — descriptions and real-world examples</p>
+</header>
+
+<div class="layout">
+  <nav>
+    <h3>Overview</h3>
+    <a href="#graph-section">Command explorer</a>
+
+    <h3>dbt</h3>
+    <a href="#dbt-run">run</a>
+    <a href="#dbt-build">build</a>
+    <a href="#dbt-test">test</a>
+    <a href="#dbt-compile">compile</a>
+    <a href="#dbt-seed">seed</a>
+    <a href="#dbt-snapshot">snapshot</a>
+    <a href="#dbt-deps">deps</a>
+    <a href="#dbt-debug">debug</a>
+    <a href="#dbt-docs">docs</a>
+    <a href="#dbt-ls">ls / source</a>
+
+    <h3>Git</h3>
+    <a href="#git-clone">clone / init</a>
+    <a href="#git-status">status / add</a>
+    <a href="#git-commit">commit</a>
+    <a href="#git-branch">branch / checkout</a>
+    <a href="#git-merge">merge / rebase</a>
+    <a href="#git-remote">push / pull / fetch</a>
+    <a href="#git-log">log / diff</a>
+    <a href="#git-stash">stash</a>
+    <a href="#git-reset">reset / revert</a>
+    <a href="#git-worktree">worktree / cherry-pick</a>
+
+    <h3>Linux</h3>
+    <a href="#lx-nav">Navigation</a>
+    <a href="#lx-files">Files &amp; dirs</a>
+    <a href="#lx-view">Viewing text</a>
+    <a href="#lx-search">Searching</a>
+    <a href="#lx-perm">Permissions</a>
+    <a href="#lx-proc">Processes</a>
+    <a href="#lx-net">Networking</a>
+    <a href="#lx-archive">Archives &amp; transfer</a>
+    <a href="#lx-disk">Disk &amp; system</a>
+    <a href="#lx-edit">Editing text</a>
+    <a href="#lx-text">Text processing</a>
+    <a href="#lx-misc">Shell helpers</a>
+  </nav>
+
+  <main>
+    <div class="search-wrap">
+      <input id="search" type="text" placeholder="Filter commands… (e.g. 'merge', 'grep', 'dbt run --select')" />
+      <span class="kbd-hint">/</span>
+    </div>
+    <div id="result-count"></div>
+
+    <!-- ============ COMMAND DROPDOWNS ============ -->
+    <section id="graph-section">
+      <h2>Command Explorer</h2>
+      <p class="graph-intro">
+        Many entries below bundle several related commands written with <code class="inline">/</code> between them.
+        Pick a <strong>category</strong>, then a <strong>group</strong>, then a <strong>command</strong> to see a
+        structured, step-by-step example.
+      </p>
+      <div class="dd-controls">
+        <div class="dd-field">
+          <label for="dd-cat">Category</label>
+          <select id="dd-cat" class="dd-select"></select>
+        </div>
+        <div class="dd-field">
+          <label for="dd-group">Group</label>
+          <select id="dd-group" class="dd-select"></select>
+        </div>
+        <div class="dd-field">
+          <label for="dd-cmd">Command</label>
+          <select id="dd-cmd" class="dd-select"></select>
+        </div>
+      </div>
+      <div class="example-panel" id="example-panel">
+        <div class="ep-empty">Select a command above to see a structured example.</div>
+      </div>
+    </section>
+
+    <!-- ============ DBT ============ -->
+    <section id="dbt-run">
+      <h2><span class="badge dbt">dbt</span> Running &amp; Building Models</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt run</code></h4>
+        <p class="desc">Executes the SQL for your models, creating or replacing tables/views in the target warehouse. The core command of any dbt project.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run only the defence combined mart and everything it depends on
+dbt run --select +int_rrd_defence_combined
+
+# Run a full refresh of an incremental model after a logic change
+dbt run --select rrd_agent_master_defense --full-refresh
+
+# Run against the UAT target before promoting to prod
+dbt run --target uat --select staging.*</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-build">
+        <h4><code class="inline">dbt build</code></h4>
+        <p class="desc">Runs models, tests, snapshots, and seeds together in dependency order. If a model's tests fail, downstream models are skipped — ideal for CI and scheduled jobs.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Nightly job: build the whole defence pipeline and stop on first failure
+dbt build --fail-fast
+
+# Build a single mart plus its upstream, with tests gating each step
+dbt build --select +rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-test">
+        <h4><code class="inline">dbt test</code></h4>
+        <p class="desc">Runs data-quality tests (schema tests like unique/not_null and singular SQL tests) against already-built models.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Validate grain and business rules on the agent base model
+dbt test --select int_rrd_defence_agent_base
+
+# Run a specific singular test that checks MTD &gt;= FTD
+dbt test --select test_mtd_gte_ftd_nop
+
+# Store failing rows in the warehouse for debugging
+dbt test --store-failures --select rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-compile">
+        <h4><code class="inline">dbt compile</code></h4>
+        <p class="desc">Renders Jinja/macros into raw SQL under <code class="inline">target/</code> without running it. Great for inspecting exactly what dbt will send to the warehouse.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># See the final SQL for a model to debug a macro
+dbt compile --select int_rrd_defence_combined
+# then open target/compiled/.../int_rrd_defence_combined.sql</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-seed">
+        <h4><code class="inline">dbt seed</code></h4>
+        <p class="desc">Loads CSV files from the <code class="inline">seeds/</code> directory into the warehouse as tables. Used for small, version-controlled lookup/reference data.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Load a designation-role mapping CSV into the warehouse
+dbt seed --select defence_designation_lookup
+
+# Reload all seeds, replacing existing tables
+dbt seed --full-refresh</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-snapshot">
+        <h4><code class="inline">dbt snapshot</code></h4>
+        <p class="desc">Captures slowly changing dimensions (Type 2 history) by recording how rows change over time.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Track changes to agent geo-hierarchy assignments over time
+dbt snapshot --select defence_agent_hierarchy_snapshot</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-deps">
+        <h4><code class="inline">dbt deps</code></h4>
+        <p class="desc">Installs packages listed in <code class="inline">packages.yml</code> (e.g. dbt_utils) into <code class="inline">dbt_packages/</code>. Run after cloning or updating dependencies.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># First step after cloning the repo on a new machine
+dbt deps</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-debug">
+        <h4><code class="inline">dbt debug</code></h4>
+        <p class="desc">Checks your setup: profile, connection to the warehouse, and project validity. The first thing to run when something won't connect.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Confirm the UAT connection works before a deployment
+dbt debug --target uat</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-docs">
+        <h4><code class="inline">dbt docs generate</code> / <code class="inline">dbt docs serve</code></h4>
+        <p class="desc">Builds a browsable documentation site (lineage graph, column descriptions, tests) and serves it locally.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Generate docs then open the lineage DAG in a browser
+dbt docs generate
+dbt docs serve --port 8080</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-ls">
+        <h4><code class="inline">dbt ls</code> &amp; selection syntax</h4>
+        <p class="desc">Lists resources matching a selector without running them. Handy for verifying what a <code class="inline">--select</code> will touch.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># List every model downstream of the staging layer
+dbt ls --select staging.*+
+
+# Only models tagged 'defence' that are also marts
+dbt ls --select tag:defence,mart.*
+
+# Preview what a scheduled run will execute
+dbt ls --select +rrd_agent_master_defense --resource-type model</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ GIT ============ -->
+    <section id="git-clone">
+      <h2><span class="badge git">git</span> Git Version Control</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git clone</code> / <code class="inline">git init</code></h4>
+        <p class="desc">Copies a remote repository to your machine, or initializes a brand-new repo in the current folder.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Clone the team's dbt project
+git clone git@github.com:acme/seller-app-defence.git
+
+# Start tracking an existing folder with Git
+cd my-project &amp;&amp; git init</code></pre>
+      </div>
+
+      <div class="cmd" id="git-status">
+        <h4><code class="inline">git status</code> / <code class="inline">git add</code></h4>
+        <p class="desc">Shows which files changed, and stages specific files for the next commit. Prefer naming files over <code class="inline">git add .</code> to avoid committing unrelated changes.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>git status
+
+# Stage just the two models you edited
+git add models/mart/rrd_agent_master_defense.sql models/mart/schema.yml</code></pre>
+      </div>
+
+      <div class="cmd" id="git-commit">
+        <h4><code class="inline">git commit</code></h4>
+        <p class="desc">Records staged changes as a snapshot with a message describing the change.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Commit with a clear, scoped message
+git commit -m "fix: correct MTD/FTD grain in defence agent base model"</code></pre>
+      </div>
+
+      <div class="cmd" id="git-branch">
+        <h4><code class="inline">git branch</code> / <code class="inline">git checkout</code> / <code class="inline">git switch</code></h4>
+        <p class="desc">Creates, lists, and moves between branches. Branches keep feature work isolated from <code class="inline">main</code>.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create and switch to a feature branch in one step
+git switch -c feature/defence-combined-mart
+
+# List all branches, see the current one
+git branch -a
+
+# Go back to main
+git switch main</code></pre>
+      </div>
+
+      <div class="cmd" id="git-merge">
+        <h4><code class="inline">git merge</code> / <code class="inline">git rebase</code></h4>
+        <p class="desc">Integrates changes from one branch into another. <code class="inline">merge</code> keeps history; <code class="inline">rebase</code> replays commits for a linear history.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Merge a finished feature into main
+git switch main &amp;&amp; git merge feature/defence-combined-mart
+
+# Rebase your branch onto the latest main before a PR
+git switch feature/defence-combined-mart &amp;&amp; git rebase main</code></pre>
+      </div>
+
+      <div class="cmd" id="git-remote">
+        <h4><code class="inline">git push</code> / <code class="inline">git pull</code> / <code class="inline">git fetch</code></h4>
+        <p class="desc">Syncs commits with the remote. <code class="inline">fetch</code> downloads without merging; <code class="inline">pull</code> fetches + merges; <code class="inline">push</code> uploads your commits.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Push a new branch and set upstream tracking
+git push -u origin feature/defence-combined-mart
+
+# Get the latest main without touching your working copy
+git fetch origin
+
+# Update your current branch from the remote
+git pull</code></pre>
+      </div>
+
+      <div class="cmd" id="git-log">
+        <h4><code class="inline">git log</code> / <code class="inline">git diff</code></h4>
+        <p class="desc">Views commit history and inspects exactly what changed between versions or in your working tree.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Compact, graphical history
+git log --oneline --graph --decorate -15
+
+# See unstaged changes to a model
+git diff models/mart/rrd_agent_master_defense.sql
+
+# Compare two branches
+git diff main..feature/defence-combined-mart</code></pre>
+      </div>
+
+      <div class="cmd" id="git-stash">
+        <h4><code class="inline">git stash</code></h4>
+        <p class="desc">Temporarily shelves uncommitted changes so you can switch context, then restores them later.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Stash WIP to quickly fix a bug on main
+git stash push -m "wip defence mart"
+git switch main
+# ...fix...
+git switch feature/defence-combined-mart &amp;&amp; git stash pop</code></pre>
+      </div>
+
+      <div class="cmd" id="git-reset">
+        <h4><code class="inline">git reset</code> / <code class="inline">git revert</code></h4>
+        <p class="desc">Undoes changes. <code class="inline">revert</code> creates a new commit that reverses another (safe for shared branches); <code class="inline">reset</code> moves the branch pointer (use with care).</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Safely undo a pushed commit by adding a reversing commit
+git revert a1b2c3d
+
+# Unstage a file but keep the edits
+git reset HEAD models/mart/schema.yml
+
+# Discard the last commit but keep changes in working tree
+git reset --soft HEAD~1</code></pre>
+      </div>
+
+      <div class="cmd" id="git-worktree">
+        <h4><code class="inline">git worktree</code> / <code class="inline">git cherry-pick</code></h4>
+        <p class="desc"><code class="inline">worktree</code> checks out multiple branches in separate folders at once; <code class="inline">cherry-pick</code> copies a single commit onto the current branch.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Work on a hotfix without disturbing your main checkout
+git worktree add ../hotfix-dir -b hotfix/urgent main
+
+# Apply just one commit from another branch
+git cherry-pick a1b2c3d</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ LINUX ============ -->
+    <section id="lx-nav">
+      <h2><span class="badge linux">linux</span> Navigation</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">pwd</code> / <code class="inline">cd</code> / <code class="inline">ls</code></h4>
+        <p class="desc">Print the current directory, change directories, and list contents.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>pwd                      # where am I?
+cd dbt/defence_agent_master
+ls -lah                  # long listing, human sizes, including hidden files
+cd -                     # jump back to the previous directory</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-files">
+      <h2><span class="badge linux">linux</span> Files &amp; Directories</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">mkdir</code> / <code class="inline">cp</code> / <code class="inline">mv</code> / <code class="inline">rm</code> / <code class="inline">touch</code></h4>
+        <p class="desc">Create, copy, move/rename, delete files and folders.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>mkdir -p models/intermediate      # create nested dirs, no error if exists
+cp profiles.yml profiles.yml.bak  # back up before editing
+mv old_model.sql staging/stg_model.sql
+touch models/new_model.sql        # create an empty file
+rm -i target/*.log                # delete with confirmation prompt
+rm -rf target/                    # remove a dir tree (double-check the path!)</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-view">
+      <h2><span class="badge linux">linux</span> Viewing Text</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">cat</code> / <code class="inline">less</code> / <code class="inline">head</code> / <code class="inline">tail</code></h4>
+        <p class="desc">Print, page through, or peek at the start/end of files. <code class="inline">tail -f</code> follows a growing log.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>cat dbt_project.yml
+less target/compiled/.../model.sql     # q to quit
+head -20 docs/SOURCE\ DDL.txt
+tail -f logs/dbt.log                    # live-follow a running dbt job</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-search">
+      <h2><span class="badge linux">linux</span> Searching</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">grep</code> / <code class="inline">find</code></h4>
+        <p class="desc"><code class="inline">grep</code> searches file contents; <code class="inline">find</code> locates files by name, type, or age.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Find every model that references a source table
+grep -rn "rrd_defence_agents" models/
+
+# Find all SQL files modified in the last day
+find models/ -name "*.sql" -mtime -1
+
+# Find and delete compiled artifacts
+find target/ -name "*.sql" -delete</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-perm">
+      <h2><span class="badge linux">linux</span> Permissions &amp; Ownership</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">chmod</code> / <code class="inline">chown</code></h4>
+        <p class="desc">Change file permissions and ownership. Common when a deployment script needs to be executable.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Make the deployment script executable
+chmod +x defence_agent_master_deployement.sh
+
+# Give the service account ownership of the logs dir
+sudo chown -R dbtuser:dbtuser /opt/dbt/logs</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-proc">
+      <h2><span class="badge linux">linux</span> Processes</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">ps</code> / <code class="inline">top</code> / <code class="inline">kill</code> / <code class="inline">&amp;</code> / <code class="inline">nohup</code></h4>
+        <p class="desc">Inspect running processes, monitor resource usage, and stop or background jobs.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Find a stuck dbt process
+ps aux | grep dbt
+
+# Kill it by PID
+kill -9 48213
+
+# Run a long dbt build in the background, surviving logout
+nohup dbt build --target prod &gt; run.log 2&gt;&amp;1 &amp;</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-net">
+      <h2><span class="badge linux">linux</span> Networking</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">curl</code> / <code class="inline">wget</code> / <code class="inline">ssh</code> / <code class="inline">ping</code></h4>
+        <p class="desc">Make HTTP requests, download files, connect to remote servers, and test connectivity.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Test a warehouse/API endpoint is reachable
+curl -I https://my-warehouse.example.com
+
+# SSH into the deployment server
+ssh dbtuser@etl-prod-01
+
+# Download a file
+wget https://example.com/reference-data.csv</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-archive">
+      <h2><span class="badge linux">linux</span> Archives &amp; Transfer</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">tar</code> / <code class="inline">gzip</code> / <code class="inline">scp</code> / <code class="inline">rsync</code></h4>
+        <p class="desc">Bundle/compress files and move them between machines efficiently.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Archive and compress the project for backup
+tar -czf defence_backup.tar.gz dbt/defence_agent_master
+
+# Copy artifacts to a remote host
+scp defence_backup.tar.gz dbtuser@etl-prod-01:/backups/
+
+# Mirror a folder to the server, only sending changes
+rsync -avz --delete ./target/ dbtuser@etl-prod-01:/opt/dbt/target/</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-disk">
+      <h2><span class="badge linux">linux</span> Disk &amp; System</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">df</code> / <code class="inline">du</code> / <code class="inline">free</code> / <code class="inline">env</code> / <code class="inline">export</code></h4>
+        <p class="desc">Check disk space, directory sizes, memory, and manage environment variables.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>df -h                     # free space per mounted filesystem
+du -sh target/            # how big is the compiled output?
+free -h                   # available RAM
+
+# Set an env var a dbt profile reads (e.g. a password)
+export DBT_PWD='••••••'
+env | grep DBT            # confirm it's set</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-edit">
+      <h2><span class="badge linux">linux</span> Editing Text</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">nano</code> / <code class="inline">vim</code></h4>
+        <p class="desc">Edit files directly in the terminal. <code class="inline">nano</code> is beginner-friendly (shortcuts shown at the bottom); <code class="inline">vim</code> is powerful and modal, found on nearly every server.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Open (or create) a file in nano, then Ctrl+O to save, Ctrl+X to quit
+nano models/mart/schema.yml
+
+# Jump straight to line 42 in nano
+nano +42 logs/dbt.log
+
+# Open a file in vim; press i to insert, Esc then :wq to save &amp; quit
+vim profiles.yml
+
+# Edit a file as root when you forgot sudo
+sudo nano /etc/hosts</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-text">
+      <h2><span class="badge linux">linux</span> Text Processing</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">sed</code> / <code class="inline">awk</code> / <code class="inline">cut</code> / <code class="inline">sort</code> / <code class="inline">uniq</code> / <code class="inline">wc</code></h4>
+        <p class="desc">The classic pipeline toolkit for transforming, slicing, and counting text and CSV data.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Replace a schema name across a file (in-place, with a .bak backup)
+sed -i.bak 's/old_schema/new_schema/g' models/sources.yml
+
+# Print the 2nd comma-separated column of a CSV
+awk -F',' '{print $2}' seeds/agents.csv
+
+# Pull columns 1 and 3 from a tab-separated file
+cut -f1,3 export.tsv
+
+# Sort rows, drop duplicates, and count how many remain
+sort agents.csv | uniq | wc -l
+
+# Count lines in every SQL model
+wc -l models/**/*.sql</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-misc">
+      <h2><span class="badge linux">linux</span> Shell Helpers</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">man</code> / <code class="inline">which</code> / <code class="inline">history</code> / <code class="inline">ln</code> / <code class="inline">xargs</code></h4>
+        <p class="desc">Everyday shell conveniences: read docs, locate binaries, reuse past commands, link files, and feed arguments into other commands.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Read the manual for a command (q to quit)
+man rsync
+
+# Find which binary runs when you type 'dbt'
+which dbt
+
+# Re-run a previous command by its history number
+history | grep "dbt run"
+!512
+
+# Create a symlink to a shared profiles file
+ln -s /opt/dbt/profiles.yml ~/.dbt/profiles.yml
+
+# Delete every .log file found, passing them to rm in batches
+find . -name "*.log" | xargs rm -f</code></pre>
+      </div>
+    </section>
+
+    <p id="noresults" class="hidden" style="color:var(--muted);text-align:center;padding:2rem;">No commands match your filter.</p>
+  </main>
+</div>
+
+<button id="to-top" title="Back to top" aria-label="Back to top">&uarr;</button>
+
+<script>
+  const search = document.getElementById('search');
+  const cards = Array.from(document.querySelectorAll('.cmd'));
+  const sections = Array.from(document.querySelectorAll('section'));
+  const noResults = document.getElementById('noresults');
+  const resultCount = document.getElementById('result-count');
+  const navLinks = Array.from(document.querySelectorAll('nav a'));
+
+  /* ---------- Dark/light theme ---------- */
+  const themeToggle = document.getElementById('theme-toggle');
+  const applyTheme = (theme) => {
+    document.documentElement.dataset.theme = theme;
+    if (themeToggle) themeToggle.checked = theme === 'light';
+    try { localStorage.setItem('command-reference-theme', theme); } catch {}
+  };
+  if (themeToggle) {
+    const currentTheme = document.documentElement.dataset.theme || 'dark';
+    themeToggle.checked = currentTheme === 'light';
+    themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked ? 'light' : 'dark'));
+  }
+
+  /* ---------- Copy-to-clipboard buttons ---------- */
+  document.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const code = pre.querySelector('code');
+      const text = code ? code.innerText : pre.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // Fallback for non-secure contexts
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        ta.remove();
+      }
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+    });
+    pre.appendChild(btn);
+  });
+
+  /* ---------- Search highlight helpers ---------- */
+  function clearHighlights(card) {
+    card.querySelectorAll('mark').forEach(m => {
+      const parent = m.parentNode;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
+  }
+
+  function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function highlight(card, q) {
+    if (!q) return;
+    const rx = new RegExp(escapeRegExp(q), 'gi');
+    const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (node.parentNode.classList && node.parentNode.classList.contains('copy-btn')) return NodeFilter.FILTER_REJECT;
+        return rx.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const targets = [];
+    while (walker.nextNode()) targets.push(walker.currentNode);
+    targets.forEach(node => {
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      node.nodeValue.replace(rx, (m, idx) => {
+        if (idx > last) frag.appendChild(document.createTextNode(node.nodeValue.slice(last, idx)));
+        const mark = document.createElement('mark');
+        mark.textContent = m;
+        frag.appendChild(mark);
+        last = idx + m.length;
+        return m;
+      });
+      if (last < node.nodeValue.length) frag.appendChild(document.createTextNode(node.nodeValue.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  }
+
+  /* ---------- Search filtering ---------- */
+  function runSearch() {
+    const q = search.value.trim().toLowerCase();
+    let visible = 0;
+
+    cards.forEach(card => {
+      clearHighlights(card);
+      const match = card.textContent.toLowerCase().includes(q);
+      card.classList.toggle('hidden', q && !match);
+      if (!q || match) {
+        visible++;
+        if (q) highlight(card, q);
+      }
+    });
+
+    sections.forEach(sec => {
+      const visibleCards = sec.querySelectorAll('.cmd:not(.hidden)').length;
+      sec.classList.toggle('hidden', q && visibleCards === 0);
+      // While searching, expand any collapsed category that has matches so results show.
+      if (q && visibleCards > 0) {
+        const block = sec.closest('.cat-block');
+        if (block && block.classList.contains('collapsed')) {
+          block.classList.remove('collapsed');
+          const head = block.querySelector('.cat-head');
+          if (head) head.setAttribute('aria-expanded', 'true');
+        }
+      }
+    });
+
+    noResults.classList.toggle('hidden', visible > 0);
+    resultCount.textContent = q ? `${visible} command${visible === 1 ? '' : 's'} match “${search.value.trim()}”` : '';
+  }
+
+  search.addEventListener('input', runSearch);
+
+  /* ---------- Keyboard shortcuts ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== search) {
+      e.preventDefault();
+      search.focus();
+      search.select();
+    } else if (e.key === 'Escape' && document.activeElement === search) {
+      search.value = '';
+      runSearch();
+      search.blur();
+    }
+  });
+
+  /* ---------- Back-to-top visibility on scroll ---------- */
+  const toTop = document.getElementById('to-top');
+
+  function onScroll() {
+    const h = document.documentElement;
+    const scrolled = h.scrollTop;
+    toTop.classList.toggle('show', scrolled > 400);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Back to top ---------- */
+  toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  /* ---------- Scrollspy: highlight active nav link ---------- */
+  const spyTargets = navLinks
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+  spyTargets.forEach(t => spy.observe(t));
+
+  /* ---------- Command tree + structured examples ---------- */
+  const treeData = [
+    { cat: 'dbt', label: 'dbt', groups: [
+      { name: 'Run & build', label: 'run / build / compile', target: 'dbt-run', commands: [
+        { name: 'dbt run', desc: 'Executes the SQL for your models, creating or replacing tables/views in the target warehouse — the core command of any dbt project.', steps: [
+          { note: 'Run a single model and everything it depends on (+ prefix = upstream)', cmd: 'dbt run --select +int_rrd_defence_combined' },
+          { note: 'Full-refresh an incremental model after a logic change', cmd: 'dbt run --select rrd_agent_master_defense --full-refresh' },
+          { note: 'Run the whole staging layer against the UAT target before prod', cmd: 'dbt run --target uat --select staging.*' },
+          { note: 'Run everything except one slow model', cmd: 'dbt run --exclude tag:slow' },
+        ]},
+        { name: 'dbt build', desc: 'Runs models, tests, snapshots, and seeds together in dependency order. If a model\u2019s tests fail, downstream models are skipped — ideal for CI and scheduled jobs.', steps: [
+          { note: 'Nightly job: build the whole pipeline, stop on first failure', cmd: 'dbt build --fail-fast' },
+          { note: 'Build one mart plus its upstream, with tests gating each step', cmd: 'dbt build --select +rrd_agent_master_defense' },
+          { note: 'Build against prod with thread parallelism', cmd: 'dbt build --target prod --threads 8' },
+        ]},
+        { name: 'dbt compile', desc: 'Renders Jinja/macros into raw SQL under target/ without running it — great for inspecting exactly what dbt will send to the warehouse.', steps: [
+          { note: 'Compile one model to debug a macro', cmd: 'dbt compile --select int_rrd_defence_combined' },
+          { note: 'Then open the rendered SQL', cmd: 'cat target/compiled/**/int_rrd_defence_combined.sql' },
+        ]},
+      ]},
+      { name: 'Test & validate', label: 'test / debug', target: 'dbt-test', commands: [
+        { name: 'dbt test', desc: 'Runs data-quality tests (schema tests like unique/not_null and singular SQL tests) against already-built models.', steps: [
+          { note: 'Validate grain and business rules on the base model', cmd: 'dbt test --select int_rrd_defence_agent_base' },
+          { note: 'Run one specific singular test', cmd: 'dbt test --select test_mtd_gte_ftd_nop' },
+          { note: 'Store failing rows in the warehouse for debugging', cmd: 'dbt test --store-failures --select rrd_agent_master_defense' },
+        ]},
+        { name: 'dbt debug', desc: 'Checks your setup: profile, warehouse connection, and project validity. The first thing to run when something won\u2019t connect.', steps: [
+          { note: 'Confirm the UAT connection works before a deployment', cmd: 'dbt debug --target uat' },
+          { note: 'Show which profiles.yml and config dbt is using', cmd: 'dbt debug --config-dir' },
+        ]},
+      ]},
+      { name: 'Data & packages', label: 'seed / snapshot / deps', target: 'dbt-seed', commands: [
+        { name: 'dbt seed', desc: 'Loads CSV files from the seeds/ directory into the warehouse as tables. Used for small, version-controlled lookup/reference data.', steps: [
+          { note: 'Load a designation-role mapping CSV', cmd: 'dbt seed --select defence_designation_lookup' },
+          { note: 'Reload all seeds, replacing existing tables', cmd: 'dbt seed --full-refresh' },
+        ]},
+        { name: 'dbt snapshot', desc: 'Captures slowly changing dimensions (Type 2 history) by recording how rows change over time.', steps: [
+          { note: 'Track changes to agent geo-hierarchy assignments', cmd: 'dbt snapshot --select defence_agent_hierarchy_snapshot' },
+        ]},
+        { name: 'dbt deps', desc: 'Installs packages listed in packages.yml (e.g. dbt_utils) into dbt_packages/. Run after cloning or updating dependencies.', steps: [
+          { note: 'First step after cloning the repo on a new machine', cmd: 'dbt deps' },
+        ]},
+      ]},
+      { name: 'Docs, listing & sources', label: 'docs / ls / source', target: 'dbt-docs', commands: [
+        { name: 'dbt docs generate', desc: 'Build the documentation site (lineage graph, column docs, tests).', steps: [
+          { note: 'Generate the docs artifacts', cmd: 'dbt docs generate' },
+          { note: 'Generate including compiled catalog stats', cmd: 'dbt docs generate --no-compile' },
+        ]},
+        { name: 'dbt docs serve', desc: 'Serve the generated docs locally in a browser.', steps: [
+          { note: 'Serve on a chosen port and open the lineage DAG', cmd: 'dbt docs serve --port 8080' },
+        ]},
+        { name: 'dbt ls', desc: 'List resources matching a selector without running them — handy for verifying what a --select will touch.', steps: [
+          { note: 'List everything downstream of staging', cmd: 'dbt ls --select staging.*+' },
+          { note: "Models tagged 'defence' that are also marts", cmd: 'dbt ls --select tag:defence,mart.*' },
+          { note: 'Preview what a scheduled run will execute', cmd: 'dbt ls --select +rrd_agent_master_defense --resource-type model' },
+        ]},
+        { name: 'dbt source freshness', desc: 'Check how fresh the configured source tables are against their loaded_at thresholds.', steps: [
+          { note: 'Run freshness checks on all sources', cmd: 'dbt source freshness' },
+          { note: 'Check freshness for one source only', cmd: 'dbt source freshness --select source:raw_defence' },
+        ]},
+      ]},
+    ]},
+    { cat: 'git', label: 'git', groups: [
+      { name: 'Start & stage', label: 'clone / init / status / add', target: 'git-clone', commands: [
+        { name: 'git clone', desc: 'Copy a remote repository to your machine.', steps: [
+          { note: "Clone the team's dbt project over SSH", cmd: 'git clone git@github.com:acme/seller-app-defence.git' },
+          { note: 'Clone into a specific folder name', cmd: 'git clone git@github.com:acme/seller-app-defence.git defence' },
+          { note: 'Shallow clone (latest commit only, faster)', cmd: 'git clone --depth 1 git@github.com:acme/seller-app-defence.git' },
+        ]},
+        { name: 'git init', desc: 'Initialize a brand-new repo in the current folder.', steps: [
+          { note: 'Start tracking an existing folder with Git', cmd: 'cd my-project && git init' },
+          { note: 'Initialize with main as the default branch', cmd: 'git init -b main' },
+        ]},
+        { name: 'git status', desc: 'Show which files changed in the working tree and staging area.', steps: [
+          { note: 'See the full working-tree state', cmd: 'git status' },
+          { note: 'Compact one-line-per-file view', cmd: 'git status -sb' },
+        ]},
+        { name: 'git add', desc: 'Stage specific files for the next commit. Prefer naming files over "git add ." to avoid committing unrelated changes.', steps: [
+          { note: 'Stage just the two models you edited', cmd: 'git add models/mart/rrd_agent_master_defense.sql models/mart/schema.yml' },
+          { note: 'Interactively choose hunks to stage', cmd: 'git add -p' },
+        ]},
+      ]},
+      { name: 'Commit', label: 'commit', target: 'git-commit', commands: [
+        { name: 'git commit', desc: 'Records staged changes as a snapshot with a message describing the change.', steps: [
+          { note: 'Commit with a clear, scoped message', cmd: 'git commit -m "fix: correct MTD/FTD grain in defence agent base model"' },
+          { note: 'Stage all tracked changes and commit in one step', cmd: 'git commit -am "chore: bump dbt_utils version"' },
+          { note: 'Add forgotten files to the last commit (before pushing)', cmd: 'git commit --amend --no-edit' },
+        ]},
+      ]},
+      { name: 'Branching', label: 'branch / checkout / switch', target: 'git-branch', commands: [
+        { name: 'git branch', desc: 'Create, list, and delete branches.', steps: [
+          { note: 'List all branches (local + remote), marking current', cmd: 'git branch -a' },
+          { note: 'Delete a merged local branch', cmd: 'git branch -d feature/defence-combined-mart' },
+        ]},
+        { name: 'git checkout', desc: 'Classic way to create and move between branches (also restores files).', steps: [
+          { note: 'Create and switch to a feature branch', cmd: 'git checkout -b feature/defence-combined-mart' },
+          { note: 'Discard local changes to one file', cmd: 'git checkout -- models/mart/schema.yml' },
+        ]},
+        { name: 'git switch', desc: 'Modern, safer branch switching (no accidental file restores).', steps: [
+          { note: 'Create and switch in one step', cmd: 'git switch -c feature/defence-combined-mart' },
+          { note: 'Go back to main', cmd: 'git switch main' },
+        ]},
+      ]},
+      { name: 'Integrate branches', label: 'merge / rebase', target: 'git-merge', commands: [
+        { name: 'git merge', desc: 'Integrate another branch, preserving history with a merge commit.', steps: [
+          { note: 'Merge a finished feature into main', cmd: 'git switch main && git merge feature/defence-combined-mart' },
+          { note: 'Force a merge commit even for fast-forwards', cmd: 'git merge --no-ff feature/defence-combined-mart' },
+        ]},
+        { name: 'git rebase', desc: 'Replay your commits on top of another branch for a linear history.', steps: [
+          { note: 'Rebase onto the latest main before a PR', cmd: 'git switch feature/defence-combined-mart && git rebase main' },
+          { note: 'Clean up / squash your last 3 commits interactively', cmd: 'git rebase -i HEAD~3' },
+        ]},
+      ]},
+      { name: 'Sync with remote', label: 'push / pull / fetch', target: 'git-remote', commands: [
+        { name: 'git push', desc: 'Upload your commits to the remote.', steps: [
+          { note: 'Push a new branch and set upstream tracking', cmd: 'git push -u origin feature/defence-combined-mart' },
+          { note: 'Push tags along with commits', cmd: 'git push --follow-tags' },
+        ]},
+        { name: 'git pull', desc: 'Fetch and integrate remote changes into your current branch.', steps: [
+          { note: 'Update your current branch from the remote', cmd: 'git pull' },
+          { note: 'Pull with rebase to keep history linear', cmd: 'git pull --rebase origin main' },
+        ]},
+        { name: 'git fetch', desc: 'Download remote changes without merging them in.', steps: [
+          { note: 'Get the latest without touching your working copy', cmd: 'git fetch origin' },
+          { note: 'Fetch and prune deleted remote branches', cmd: 'git fetch --prune' },
+        ]},
+      ]},
+      { name: 'Inspect history', label: 'log / diff', target: 'git-log', commands: [
+        { name: 'git log', desc: 'View commit history.', steps: [
+          { note: 'Compact, graphical history', cmd: 'git log --oneline --graph --decorate -15' },
+          { note: 'Show commits that touched one file', cmd: 'git log --follow -- models/mart/rrd_agent_master_defense.sql' },
+        ]},
+        { name: 'git diff', desc: 'Inspect exactly what changed between versions or in your working tree.', steps: [
+          { note: 'See unstaged changes to a model', cmd: 'git diff models/mart/rrd_agent_master_defense.sql' },
+          { note: 'See what is staged for commit', cmd: 'git diff --staged' },
+          { note: 'Compare two branches', cmd: 'git diff main..feature/defence-combined-mart' },
+        ]},
+      ]},
+      { name: 'Shelve work', label: 'stash', target: 'git-stash', commands: [
+        { name: 'git stash', desc: 'Temporarily shelve uncommitted changes so you can switch context, then restore them later.', steps: [
+          { note: 'Stash WIP with a label to fix a bug on main', cmd: 'git stash push -m "wip defence mart"' },
+          { note: 'List what is currently stashed', cmd: 'git stash list' },
+          { note: 'Reapply the most recent stash and drop it', cmd: 'git stash pop' },
+        ]},
+      ]},
+      { name: 'Undo changes', label: 'reset / revert', target: 'git-reset', commands: [
+        { name: 'git reset', desc: 'Move the branch pointer (use with care — can discard commits).', steps: [
+          { note: 'Unstage a file but keep the edits', cmd: 'git reset HEAD models/mart/schema.yml' },
+          { note: 'Discard the last commit but keep the changes staged', cmd: 'git reset --soft HEAD~1' },
+          { note: 'Throw away the last commit AND its changes (dangerous)', cmd: 'git reset --hard HEAD~1' },
+        ]},
+        { name: 'git revert', desc: 'Add a new commit that reverses another — safe for shared branches.', steps: [
+          { note: 'Safely undo a pushed commit', cmd: 'git revert a1b2c3d' },
+        ]},
+      ]},
+      { name: 'Advanced workflows', label: 'worktree / cherry-pick', target: 'git-worktree', commands: [
+        { name: 'git worktree', desc: 'Check out multiple branches in separate folders at once.', steps: [
+          { note: 'Work on a hotfix without disturbing your main checkout', cmd: 'git worktree add ../hotfix-dir -b hotfix/urgent main' },
+          { note: 'List existing worktrees', cmd: 'git worktree list' },
+          { note: 'Remove a worktree when done', cmd: 'git worktree remove ../hotfix-dir' },
+        ]},
+        { name: 'git cherry-pick', desc: 'Copy a single commit onto the current branch.', steps: [
+          { note: 'Apply just one commit from another branch', cmd: 'git cherry-pick a1b2c3d' },
+          { note: 'Cherry-pick a range of commits', cmd: 'git cherry-pick a1b2c3d^..e4f5g6h' },
+        ]},
+      ]},
+    ]},
+    { cat: 'linux', label: 'linux', groups: [
+      { name: 'Navigation', label: 'pwd / cd / ls', target: 'lx-nav', commands: [
+        { name: 'pwd', desc: 'Print the absolute path of the current working directory.', steps: [
+          { note: 'Where am I right now?', cmd: 'pwd' },
+        ]},
+        { name: 'cd', desc: 'Change the current directory.', steps: [
+          { note: 'Move into a project folder', cmd: 'cd dbt/defence_agent_master' },
+          { note: 'Jump back to the previous directory', cmd: 'cd -' },
+          { note: 'Go straight to your home directory', cmd: 'cd ~' },
+        ]},
+        { name: 'ls', desc: 'List directory contents.', steps: [
+          { note: 'Long listing, human sizes, including hidden files', cmd: 'ls -lah' },
+          { note: 'Sort by most recently modified', cmd: 'ls -lt' },
+          { note: 'List only directories', cmd: 'ls -d */' },
+        ]},
+      ]},
+      { name: 'Files & directories', label: 'mkdir / cp / mv / rm / touch', target: 'lx-files', commands: [
+        { name: 'mkdir', desc: 'Create directories.', steps: [
+          { note: 'Create nested dirs, no error if they exist', cmd: 'mkdir -p models/intermediate/defence' },
+        ]},
+        { name: 'cp', desc: 'Copy files and folders.', steps: [
+          { note: 'Back up a file before editing', cmd: 'cp profiles.yml profiles.yml.bak' },
+          { note: 'Copy a whole folder recursively', cmd: 'cp -r seeds/ seeds_backup/' },
+        ]},
+        { name: 'mv', desc: 'Move or rename files and folders.', steps: [
+          { note: 'Rename a model into the staging folder', cmd: 'mv old_model.sql staging/stg_model.sql' },
+          { note: 'Move all CSVs into the seeds dir', cmd: 'mv *.csv seeds/' },
+        ]},
+        { name: 'rm', desc: 'Delete files and folders.', steps: [
+          { note: 'Delete logs with a confirmation prompt', cmd: 'rm -i target/*.log' },
+          { note: 'Remove a dir tree (double-check the path!)', cmd: 'rm -rf target/' },
+        ]},
+        { name: 'touch', desc: 'Create an empty file, or update a file\u2019s timestamp.', steps: [
+          { note: 'Create a new model file', cmd: 'touch models/new_model.sql' },
+        ]},
+      ]},
+      { name: 'Viewing text', label: 'cat / less / head / tail', target: 'lx-view', commands: [
+        { name: 'cat', desc: 'Print a whole file to the terminal.', steps: [
+          { note: 'Print the project config', cmd: 'cat dbt_project.yml' },
+          { note: 'Concatenate two files into one', cmd: 'cat part1.sql part2.sql > combined.sql' },
+        ]},
+        { name: 'less', desc: 'Page through a file interactively (q to quit, / to search).', steps: [
+          { note: 'Page through compiled SQL', cmd: 'less target/compiled/defence/int_combined.sql' },
+        ]},
+        { name: 'head', desc: 'Peek at the start of a file.', steps: [
+          { note: 'First 20 lines of a doc', cmd: "head -20 'docs/SOURCE DDL.txt'" },
+        ]},
+        { name: 'tail', desc: 'Peek at the end of a file, or follow a growing log.', steps: [
+          { note: 'Live-follow a running dbt job', cmd: 'tail -f logs/dbt.log' },
+          { note: 'Last 100 lines of a log', cmd: 'tail -n 100 logs/dbt.log' },
+        ]},
+      ]},
+      { name: 'Searching', label: 'grep / find', target: 'lx-search', commands: [
+        { name: 'grep', desc: 'Search file contents by pattern.', steps: [
+          { note: 'Recursively find every model referencing a source', cmd: 'grep -rn "rrd_defence_agents" models/' },
+          { note: 'Case-insensitive search, show only filenames', cmd: 'grep -ril "full_refresh" models/' },
+        ]},
+        { name: 'find', desc: 'Locate files by name, type, size, or age.', steps: [
+          { note: 'SQL files modified in the last day', cmd: 'find models/ -name "*.sql" -mtime -1' },
+          { note: 'Find and delete compiled artifacts', cmd: 'find target/ -name "*.sql" -delete' },
+          { note: 'Run a command on each match', cmd: 'find models/ -name "*.sql" -exec wc -l {} +' },
+        ]},
+      ]},
+      { name: 'Permissions', label: 'chmod / chown', target: 'lx-perm', commands: [
+        { name: 'chmod', desc: 'Change file permission bits.', steps: [
+          { note: 'Make the deployment script executable', cmd: 'chmod +x defence_agent_master_deployement.sh' },
+          { note: 'Give owner read/write, group read (0640)', cmd: 'chmod 640 profiles.yml' },
+        ]},
+        { name: 'chown', desc: 'Change file ownership (usually needs sudo).', steps: [
+          { note: 'Give the service account ownership of the logs dir', cmd: 'sudo chown -R dbtuser:dbtuser /opt/dbt/logs' },
+        ]},
+      ]},
+      { name: 'Processes', label: 'ps / top / kill / & / nohup', target: 'lx-proc', commands: [
+        { name: 'ps', desc: 'Snapshot of running processes.', steps: [
+          { note: 'Find a stuck dbt process', cmd: 'ps aux | grep dbt' },
+        ]},
+        { name: 'top', desc: 'Monitor CPU/memory usage live (q to quit).', steps: [
+          { note: 'Watch resource usage in real time', cmd: 'top' },
+          { note: 'Sort by memory (press M inside, or use htop)', cmd: 'htop' },
+        ]},
+        { name: 'kill', desc: 'Send a signal to a process by PID.', steps: [
+          { note: 'Ask a process to stop gracefully', cmd: 'kill 48213' },
+          { note: 'Force-kill a hung job', cmd: 'kill -9 48213' },
+        ]},
+        { name: '&', desc: 'Run a job in the background of the current shell.', steps: [
+          { note: 'Background a long build', cmd: 'dbt build --target prod &' },
+          { note: 'List background jobs in this shell', cmd: 'jobs' },
+        ]},
+        { name: 'nohup', desc: 'Run a job that keeps going after you log out.', steps: [
+          { note: 'Run a long dbt build, logging to a file', cmd: 'nohup dbt build --target prod > run.log 2>&1 &' },
+        ]},
+      ]},
+      { name: 'Networking', label: 'curl / wget / ssh / ping', target: 'lx-net', commands: [
+        { name: 'curl', desc: 'Make HTTP requests from the command line.', steps: [
+          { note: 'Test an endpoint is reachable (headers only)', cmd: 'curl -I https://my-warehouse.example.com' },
+          { note: 'POST JSON to an API', cmd: 'curl -X POST -H "Content-Type: application/json" -d \'{"ok":true}\' https://api.example.com/hook' },
+        ]},
+        { name: 'wget', desc: 'Download files over HTTP/FTP.', steps: [
+          { note: 'Download a reference file', cmd: 'wget https://example.com/reference-data.csv' },
+          { note: 'Resume an interrupted download', cmd: 'wget -c https://example.com/big-dump.sql.gz' },
+        ]},
+        { name: 'ssh', desc: 'Open a secure shell on a remote server.', steps: [
+          { note: 'SSH into the deployment server', cmd: 'ssh dbtuser@etl-prod-01' },
+          { note: 'Run one command remotely without a login shell', cmd: 'ssh dbtuser@etl-prod-01 "dbt --version"' },
+        ]},
+        { name: 'ping', desc: 'Test connectivity and latency to a host.', steps: [
+          { note: 'Send 4 packets then stop', cmd: 'ping -c 4 etl-prod-01' },
+        ]},
+      ]},
+      { name: 'Archives & transfer', label: 'tar / gzip / scp / rsync', target: 'lx-archive', commands: [
+        { name: 'tar', desc: 'Bundle many files into one archive (and compress).', steps: [
+          { note: 'Archive and gzip the project for backup', cmd: 'tar -czf defence_backup.tar.gz dbt/defence_agent_master' },
+          { note: 'Extract an archive', cmd: 'tar -xzf defence_backup.tar.gz' },
+        ]},
+        { name: 'gzip', desc: 'Compress a single file in place.', steps: [
+          { note: 'Compress a log file', cmd: 'gzip run.log' },
+          { note: 'Decompress it again', cmd: 'gunzip run.log.gz' },
+        ]},
+        { name: 'scp', desc: 'Copy files between machines over SSH.', steps: [
+          { note: 'Copy a backup to a remote host', cmd: 'scp defence_backup.tar.gz dbtuser@etl-prod-01:/backups/' },
+          { note: 'Pull a file down from the server', cmd: 'scp dbtuser@etl-prod-01:/opt/dbt/logs/dbt.log .' },
+        ]},
+        { name: 'rsync', desc: 'Efficiently sync folders, transferring only changes.', steps: [
+          { note: 'Mirror a folder to the server, deleting extras', cmd: 'rsync -avz --delete ./target/ dbtuser@etl-prod-01:/opt/dbt/target/' },
+          { note: 'Preview what would change (dry run)', cmd: 'rsync -avzn ./target/ dbtuser@etl-prod-01:/opt/dbt/target/' },
+        ]},
+      ]},
+      { name: 'Disk & system', label: 'df / du / free / env / export', target: 'lx-disk', commands: [
+        { name: 'df', desc: 'Report free disk space per filesystem.', steps: [
+          { note: 'Free space per mounted filesystem', cmd: 'df -h' },
+        ]},
+        { name: 'du', desc: 'Measure directory and file sizes.', steps: [
+          { note: 'How big is the compiled output?', cmd: 'du -sh target/' },
+          { note: 'Largest subfolders, sorted', cmd: 'du -h --max-depth=1 . | sort -h' },
+        ]},
+        { name: 'free', desc: 'Show memory usage.', steps: [
+          { note: 'Show available RAM in human units', cmd: 'free -h' },
+        ]},
+        { name: 'env', desc: 'Inspect the current environment variables.', steps: [
+          { note: 'Confirm dbt-related vars are set', cmd: 'env | grep DBT' },
+        ]},
+        { name: 'export', desc: 'Set an environment variable for this shell and its children.', steps: [
+          { note: 'Set a password a dbt profile reads', cmd: "export DBT_PWD='secret'" },
+          { note: 'Persist it by adding to your shell profile', cmd: "echo 'export DBT_PWD=secret' >> ~/.bashrc" },
+        ]},
+      ]},
+      { name: 'Editing text', label: 'nano / vim', target: 'lx-edit', commands: [
+        { name: 'nano', desc: 'Beginner-friendly terminal text editor. Shortcuts are listed along the bottom (^ means Ctrl).', steps: [
+          { note: 'Open (or create) a file to edit', cmd: 'nano models/mart/schema.yml' },
+          { note: 'Save with Ctrl+O, then quit with Ctrl+X', cmd: '# ^O  write out   ·   ^X  exit' },
+          { note: 'Open straight at a specific line', cmd: 'nano +42 logs/dbt.log' },
+          { note: 'Edit a protected file as root', cmd: 'sudo nano /etc/hosts' },
+        ]},
+        { name: 'vim', desc: 'Powerful modal editor available on nearly every server. Press i to type, Esc to leave insert mode.', steps: [
+          { note: 'Open a file', cmd: 'vim profiles.yml' },
+          { note: 'Save and quit (from normal mode)', cmd: ':wq' },
+          { note: 'Quit without saving', cmd: ':q!' },
+        ]},
+      ]},
+      { name: 'Text processing', label: 'sed / awk / cut / sort / uniq / wc', target: 'lx-text', commands: [
+        { name: 'sed', desc: 'Stream editor for find-and-replace and line edits.', steps: [
+          { note: 'Replace a schema name in-place, keeping a .bak backup', cmd: "sed -i.bak 's/old_schema/new_schema/g' models/sources.yml" },
+          { note: 'Print only lines 10\u201320 of a file', cmd: "sed -n '10,20p' logs/dbt.log" },
+        ]},
+        { name: 'awk', desc: 'Field-aware text processor, great for columnar/CSV data.', steps: [
+          { note: 'Print the 2nd comma-separated column', cmd: "awk -F',' '{print $2}' seeds/agents.csv" },
+          { note: 'Sum a numeric column', cmd: "awk -F',' '{s+=$3} END{print s}' seeds/nop.csv" },
+        ]},
+        { name: 'cut', desc: 'Extract specific columns or character ranges.', steps: [
+          { note: 'Pull columns 1 and 3 from a TSV', cmd: 'cut -f1,3 export.tsv' },
+          { note: 'Grab the first 8 characters of each line', cmd: 'cut -c1-8 ids.txt' },
+        ]},
+        { name: 'sort', desc: 'Sort lines of text.', steps: [
+          { note: 'Sort numerically, descending', cmd: 'sort -nr nop_counts.txt' },
+          { note: 'Sort a CSV by its 2nd column', cmd: "sort -t',' -k2 agents.csv" },
+        ]},
+        { name: 'uniq', desc: 'Collapse or count adjacent duplicate lines (sort first).', steps: [
+          { note: 'Count how many times each value appears', cmd: 'sort agents.csv | uniq -c | sort -nr' },
+        ]},
+        { name: 'wc', desc: 'Count lines, words, and bytes.', steps: [
+          { note: 'Count rows (minus header) in a CSV', cmd: 'wc -l seeds/agents.csv' },
+        ]},
+      ]},
+      { name: 'Shell helpers', label: 'man / which / history / ln / xargs', target: 'lx-misc', commands: [
+        { name: 'man', desc: 'Open the manual page for a command (q to quit).', steps: [
+          { note: 'Read the rsync manual', cmd: 'man rsync' },
+        ]},
+        { name: 'which', desc: 'Show the full path of the binary a command resolves to.', steps: [
+          { note: 'Which dbt am I actually running?', cmd: 'which dbt' },
+        ]},
+        { name: 'history', desc: 'Show or search previously run commands.', steps: [
+          { note: 'Find a past dbt run command', cmd: 'history | grep "dbt run"' },
+          { note: 'Re-run command number 512', cmd: '!512' },
+        ]},
+        { name: 'ln', desc: 'Create links between files (usually symbolic).', steps: [
+          { note: 'Symlink a shared profiles file into ~/.dbt', cmd: 'ln -s /opt/dbt/profiles.yml ~/.dbt/profiles.yml' },
+        ]},
+        { name: 'xargs', desc: 'Turn piped input into arguments for another command.', steps: [
+          { note: 'Delete every .log file find locates', cmd: 'find . -name "*.log" | xargs rm -f' },
+          { note: 'grep across a filtered file list', cmd: 'find models -name "*.sql" | xargs grep -l "full_refresh"' },
+        ]},
+      ]},
+    ]},
+  ];
+
+  (function renderDropdowns() {
+    const catSel = document.getElementById('dd-cat');
+    const groupSel = document.getElementById('dd-group');
+    const cmdSel = document.getElementById('dd-cmd');
+    const panel = document.getElementById('example-panel');
+    if (!catSel || !groupSel || !cmdSel || !panel) return;
+
+    const mk = (tag, cls, txt) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (txt != null) n.textContent = txt;
+      return n;
+    };
+
+    function option(value, label, disabled) {
+      const o = document.createElement('option');
+      o.value = value;
+      o.textContent = label;
+      if (disabled) { o.disabled = true; o.selected = true; }
+      return o;
+    }
+
+    function showEmpty(msg) {
+      panel.innerHTML = '';
+      panel.appendChild(mk('div', 'ep-empty', msg || 'Select a command above to see a structured example.'));
+    }
+
+    // Jump to a command card: expand its category, scroll to it, flash for 0.5s.
+    function highlightCard(card) {
+      // Solid highlight held for 1s, then a quick fade. Uses inline styles so it
+      // still shows even when prefers-reduced-motion disables @keyframes.
+      card.style.transition = 'none';
+      card.style.borderColor = 'var(--accent)';
+      card.style.boxShadow = '0 0 0 3px rgba(88,166,255,.6)';
+      card.style.background = 'rgba(88,166,255,.16)';
+      setTimeout(() => {
+        card.style.transition = 'box-shadow .35s ease, border-color .35s ease, background .35s ease';
+        card.style.borderColor = '';
+        card.style.boxShadow = '';
+        card.style.background = '';
+        setTimeout(() => { card.style.transition = ''; }, 400);
+      }, 1000);
+    }
+
+    function jumpToCard(targetId) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      // The target may be a <section> (use its first card) or a .cmd card itself.
+      const card = el.classList.contains('cmd') ? el : (el.querySelector('.cmd') || el);
+
+      // Expand EVERY collapsed category wrapper above the card so it is visible.
+      let anc = card.parentElement;
+      while (anc) {
+        if (anc.classList && anc.classList.contains('cat-block')) {
+          anc.classList.remove('collapsed');
+          const head = anc.querySelector('.cat-head');
+          if (head) head.setAttribute('aria-expanded', 'true');
+        }
+        anc = anc.parentElement;
+      }
+
+      // Force the card painted even if reveal-on-scroll left it at opacity:0.
+      // Also reveal every card in the target section so layout heights are final
+      // before we measure (avoids a stale scroll target).
+      const host = card.closest('section') || card;
+      host.querySelectorAll('.cmd').forEach(c => {
+        c.classList.add('reveal', 'shown');
+        c.style.opacity = '1';
+        c.style.transform = 'none';
+      });
+
+      const headerH = parseInt(getComputedStyle(document.documentElement)
+        .getPropertyValue('--header-h')) || 64;
+
+      // Let the just-expanded category lay out, then jump to the card using a
+      // manually computed absolute position. The jump is INSTANT: the target can
+      // be a full page away, and the page's global `scroll-behavior: smooth` would
+      // otherwise turn it into a slow ~1s glide that looks like nothing happened.
+      // We temporarily override that CSS to guarantee an immediate jump.
+      setTimeout(() => {
+        const htmlEl = document.documentElement;
+        const prev = htmlEl.style.scrollBehavior;
+        htmlEl.style.scrollBehavior = 'auto';
+        const rect = card.getBoundingClientRect();
+        const targetY = Math.max(0, window.scrollY + rect.top - headerH - 24);
+        window.scrollTo(0, targetY);
+        htmlEl.style.scrollBehavior = prev;
+        highlightCard(card);
+      }, 100);
+    }
+
+    function showExample(cmd, group) {
+      panel.innerHTML = '';
+      const head = mk('div', 'ep-head');
+      const title = mk('h4', 'ep-link', cmd.name);
+      title.setAttribute('role', 'button');
+      title.setAttribute('tabindex', '0');
+      title.title = 'Open this command in the reference below';
+      const go = () => jumpToCard(group.target);
+      title.addEventListener('click', go);
+      title.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      head.appendChild(title);
+      const path = mk('span', 'ep-path', `${group.name} · ${group.label}`);
+      head.appendChild(path);
+      panel.appendChild(head);
+
+      const body = mk('div', 'ep-body');
+      if (cmd.desc) body.appendChild(mk('p', 'ep-desc', cmd.desc));
+
+      // Dedicated, obvious jump control.
+      const jumpBtn = mk('button', 'ep-jump', 'Go to this command in the reference ↓');
+      jumpBtn.type = 'button';
+      jumpBtn.addEventListener('click', () => jumpToCard(group.target));
+      body.appendChild(jumpBtn);
+
+      cmd.steps.forEach((step, i) => {
+        const row = mk('div', 'ex-step');
+        row.appendChild(mk('span', 'ex-num', String(i + 1)));
+        row.appendChild(mk('span', 'ex-note', step.note));
+        const code = mk('div', 'ex-cmd');
+        code.textContent = step.cmd;
+        // click-to-copy
+        const copy = mk('button', 'copy-btn', 'Copy');
+        copy.type = 'button';
+        copy.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(step.cmd); }
+          catch {
+            const ta = document.createElement('textarea');
+            ta.value = step.cmd; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch {}
+            ta.remove();
+          }
+          copy.textContent = 'Copied!'; copy.classList.add('copied');
+          setTimeout(() => { copy.textContent = 'Copy'; copy.classList.remove('copied'); }, 1500);
+        });
+        code.appendChild(copy);
+        row.appendChild(code);
+        body.appendChild(row);
+      });
+      panel.appendChild(body);
+    }
+
+    // --- Populate category dropdown ---
+    catSel.appendChild(option('', 'Choose a category…', true));
+    treeData.forEach((cat, i) => catSel.appendChild(option(String(i), cat.label)));
+
+    function resetSelect(sel, placeholder) {
+      sel.innerHTML = '';
+      sel.appendChild(option('', placeholder, true));
+      sel.disabled = true;
+    }
+    resetSelect(groupSel, 'Choose a group…');
+    resetSelect(cmdSel, 'Choose a command…');
+
+    catSel.addEventListener('change', () => {
+      const cat = treeData[catSel.value];
+      resetSelect(groupSel, 'Choose a group…');
+      resetSelect(cmdSel, 'Choose a command…');
+      showEmpty();
+      if (!cat) return;
+      cat.groups.forEach((g, i) => groupSel.appendChild(option(String(i), g.name + ' — ' + g.label)));
+      groupSel.disabled = false;
+    });
+
+    groupSel.addEventListener('change', () => {
+      const cat = treeData[catSel.value];
+      const group = cat && cat.groups[groupSel.value];
+      resetSelect(cmdSel, 'Choose a command…');
+      showEmpty();
+      if (!group) return;
+      group.commands.forEach((c, i) => cmdSel.appendChild(option(String(i), c.name)));
+      cmdSel.disabled = false;
+    });
+
+    cmdSel.addEventListener('change', () => {
+      const cat = treeData[catSel.value];
+      const group = cat && cat.groups[groupSel.value];
+      const cmd = group && group.commands[cmdSel.value];
+      if (cmd) showExample(cmd, group);
+      else showEmpty();
+    });
+  })();
+
+  /* ---------- Collapsible command sections ---------- */
+  (function makeCategoriesCollapsible() {
+    // Collapse only at the top category level (dbt / git / linux). A single
+    // category may span several <section> elements (e.g. linux), so group all
+    // sections sharing a category badge under one collapsible wrapper.
+    const main = document.querySelector('main');
+    const sections = Array.from(main.querySelectorAll(':scope > section'));
+
+    const catOf = (sec) => {
+      const badge = sec.querySelector(':scope > h2 .badge');
+      if (!badge) return null;
+      return ['dbt', 'git', 'linux'].find(c => badge.classList.contains(c)) || null;
+    };
+
+    // Build ordered [cat, [sections...]] groups from consecutive sections.
+    const groups = [];
+    sections.forEach(sec => {
+      const cat = catOf(sec);
+      if (!cat) return; // skip the Command Explorer section
+      const last = groups[groups.length - 1];
+      if (last && last.cat === cat) last.secs.push(sec);
+      else groups.push({ cat: cat, secs: [sec] });
+    });
+
+    groups.forEach(group => {
+      const first = group.secs[0];
+
+      // Wrapper that holds the category header + all its sections.
+      const wrap = document.createElement('div');
+      wrap.className = `cat-block cat-${group.cat}`;
+      first.parentNode.insertBefore(wrap, first);
+
+      // Category header bar.
+      const header = document.createElement('div');
+      header.className = 'cat-head';
+      header.setAttribute('role', 'button');
+      header.setAttribute('tabindex', '0');
+      header.setAttribute('aria-expanded', 'true');
+
+      const badge = document.createElement('span');
+      badge.className = `badge ${group.cat}`;
+      badge.textContent = group.cat;
+      const title = document.createElement('span');
+      title.className = 'cat-title';
+      title.textContent = { dbt: 'dbt', git: 'Git', linux: 'Linux' }[group.cat];
+      const twist = document.createElement('span');
+      twist.className = 'sec-twist';
+      twist.textContent = '▾';
+
+      header.appendChild(badge);
+      header.appendChild(title);
+      header.appendChild(twist);
+      wrap.appendChild(header);
+
+      // Body holds the sections; move them in order.
+      const body = document.createElement('div');
+      body.className = 'cat-body';
+      group.secs.forEach(sec => body.appendChild(sec));
+      wrap.appendChild(body);
+
+      const toggle = () => {
+        const collapsed = wrap.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', String(!collapsed));
+      };
+      header.addEventListener('click', toggle);
+      header.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+  })();
+
+  /* ---------- Reveal cards on scroll ---------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    cards.forEach(c => c.classList.add('reveal'));
+    const reveal = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('shown');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.05 });
+    cards.forEach(c => reveal.observe(c));
+  }
+</script>
+</body>
+</html>

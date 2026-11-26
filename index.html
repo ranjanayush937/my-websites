@@ -3,122 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>my-websites-index</title>
+<title>my-websites</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6fa; --card: #ffffff; --text: #1b1e27; --muted: #6b7280;
+    --border: #e5e7eb; --accent: #4f46e5; --accent-soft: #eef2ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1015; --card: #171a22; --text: #e8eaf0; --muted: #98a0b3;
+      --border: #272b36; --accent: #818cf8; --accent-soft: #1f2340;
+    }
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; }
-  header { padding: 12px 16px; border-bottom: 1px solid #8884; position: sticky; top: 0; background: Canvas; z-index: 1; }
-  h1 { margin: 0 0 8px; font-size: 1.1rem; }
-  input { width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #8886; border-radius: 6px; }
-  main { display: flex; flex-wrap: wrap; }
-  #list { flex: 1 1 280px; max-width: 100%; margin: 0; padding: 0; list-style: none; }
-  #list li { border-bottom: 1px solid #8883; }
-  #list button { width: 100%; text-align: left; padding: 12px 16px; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; word-break: break-all; }
-  #list button:hover, #list button.active { background: #8883; }
-  #viewer { flex: 3 1 400px; padding: 16px; min-width: 0; }
-  #viewer pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
-  #viewer img, #viewer iframe { max-width: 100%; }
-  #viewer iframe { width: 100%; height: 75vh; border: 1px solid #8884; }
-  .muted { opacity: .7; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -.02em; }
+  .sub { margin: 4px 0 24px; color: var(--muted); }
+  .search { position: sticky; top: 0; padding: 8px 0 16px; background: var(--bg); z-index: 1; }
+  .search input {
+    width: 100%; padding: 14px 16px; font-size: 1rem; color: var(--text);
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  a.card {
+    display: flex; align-items: center; gap: 12px; padding: 14px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    color: inherit; text-decoration: none; min-width: 0;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+  }
+  a.card:hover, a.card:focus-visible { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 6px 18px #0000001a; outline: none; }
+  .icon {
+    flex: none; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  }
+  .text { min-width: 0; }
+  .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dir { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .state { text-align: center; color: var(--muted); padding: 48px 0; grid-column: 1 / -1; }
 </style>
 </head>
 <body>
-<header>
-  <h1>ranjanayush937 / my-websites</h1>
-  <input id="q" type="search" placeholder="Search files..." aria-label="Search files">
-</header>
-<main>
-  <ul id="list"><li class="muted" style="padding:12px 16px">Loading...</li></ul>
-  <section id="viewer"><p class="muted">Select a file to view it.</p></section>
-</main>
+<div class="wrap">
+  <h1>My Websites</h1>
+  <p class="sub" id="count">Loading...</p>
+  <div class="search">
+    <input id="q" type="search" placeholder="Search files..." aria-label="Search files" autocomplete="off">
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
 <script>
 const OWNER = "ranjanayush937", REPO = "my-websites";
 const API = "https://api.github.com/repos/" + OWNER + "/" + REPO;
 const SITE = "https://" + OWNER + ".github.io/" + REPO + "/";
-const list = document.getElementById("list");
-const viewer = document.getElementById("viewer");
+const grid = document.getElementById("grid");
+const count = document.getElementById("count");
 const q = document.getElementById("q");
-let files = [], branch = "main";
+let files = [];
 
 const enc = p => p.split("/").map(encodeURIComponent).join("/");
-const ext = p => (p.split(".").pop() || "").toLowerCase();
-const IMG = ["png", "jpg", "jpeg", "gif", "webp", "svg", "ico"];
-const PAGE = ["html", "htm"];
 
-function msg(text) {
-  const p = document.createElement("p");
-  p.className = "muted";
-  p.textContent = text;
-  return p;
+function state(text) {
+  const d = document.createElement("div");
+  d.className = "state";
+  d.textContent = text;
+  grid.replaceChildren(d);
 }
 
 function render() {
-  const term = q.value.toLowerCase();
-  list.replaceChildren();
-  files.filter(f => f.path.toLowerCase().includes(term)).forEach(f => {
-    const li = document.createElement("li");
-    const b = document.createElement("button");
-    b.textContent = f.path;
-    b.onclick = () => {
-      list.querySelectorAll("button").forEach(x => x.classList.remove("active"));
-      b.classList.add("active");
-      openFile(f.path);
-    };
-    li.appendChild(b);
-    list.appendChild(li);
-  });
-}
-
-async function openFile(path) {
-  viewer.replaceChildren(msg("Loading..."));
-  const e = ext(path);
-  const raw = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + encodeURIComponent(branch) + "/" + enc(path);
-  const link = document.createElement("p");
-  const a = document.createElement("a");
-  a.href = SITE + enc(path);
-  a.target = "_blank";
-  a.rel = "noopener";
-  a.textContent = "Open in new tab";
-  link.appendChild(a);
-
-  if (IMG.includes(e)) {
-    const img = document.createElement("img");
-    img.src = raw; img.alt = path;
-    viewer.replaceChildren(link, img);
-  } else if (PAGE.includes(e)) {
-    const f = document.createElement("iframe");
-    f.src = SITE + enc(path);
-    f.sandbox = "allow-scripts allow-same-origin";
-    viewer.replaceChildren(link, f);
-  } else {
-    try {
-      const r = await fetch(raw);
-      if (!r.ok) throw new Error(r.status);
-      const pre = document.createElement("pre");
-      pre.textContent = await r.text();
-      viewer.replaceChildren(link, pre);
-    } catch (err) {
-      viewer.replaceChildren(link, msg("Could not load this file."));
-    }
-  }
+  const term = q.value.trim().toLowerCase();
+  const shown = files.filter(f => f.toLowerCase().includes(term));
+  count.textContent = shown.length + " of " + files.length + " files";
+  if (!shown.length) return state("No files match your search.");
+  grid.replaceChildren(...shown.map(path => {
+    const i = path.lastIndexOf("/");
+    const name = path.slice(i + 1), dir = i > -1 ? path.slice(0, i) : "/";
+    const dot = name.lastIndexOf(".");
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = SITE + enc(path);
+    a.target = "_blank";
+    a.rel = "noopener";
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.textContent = dot > 0 ? name.slice(dot + 1, dot + 5) : "file";
+    const text = document.createElement("div");
+    text.className = "text";
+    const n = document.createElement("div");
+    n.className = "name"; n.textContent = name; n.title = path;
+    const d = document.createElement("div");
+    d.className = "dir"; d.textContent = dir;
+    text.append(n, d);
+    a.append(icon, text);
+    return a;
+  }));
 }
 
 async function init() {
   try {
     const repo = await (await fetch(API)).json();
     if (!repo.default_branch) throw new Error(repo.message || "repo not found");
-    branch = repo.default_branch;
-    const tree = await (await fetch(API + "/git/trees/" + encodeURIComponent(branch) + "?recursive=1")).json();
+    const tree = await (await fetch(API + "/git/trees/" + encodeURIComponent(repo.default_branch) + "?recursive=1")).json();
     if (!tree.tree) throw new Error(tree.message || "no files");
-    files = tree.tree.filter(t => t.type === "blob");
+    files = tree.tree
+      .filter(t => t.type === "blob" && t.path !== "index.html")
+      .map(t => t.path);
     render();
   } catch (err) {
-    list.replaceChildren();
-    const li = document.createElement("li");
-    li.style.padding = "12px 16px";
-    li.appendChild(msg("Could not load files: " + err.message));
-    list.appendChild(li);
+    count.textContent = "";
+    state("Could not load files: " + err.message);
   }
 }
 q.addEventListener("input", render);

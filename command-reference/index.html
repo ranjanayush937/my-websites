@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Command Reference — dbt, Git &amp; Linux</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<script>
+  try {
+    const savedTheme = localStorage.getItem('command-reference-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+  } catch {}
+</script>
+<header>
+  <div class="theme-control" title="Switch between dark and light theme">
+    <span class="theme-icon" aria-hidden="true">☾</span>
+    <span class="theme-label">Dark</span>
+    <label class="theme-switch" aria-label="Toggle light theme">
+      <input id="theme-toggle" type="checkbox" />
+      <span class="theme-slider"></span>
+    </label>
+    <span class="theme-icon" aria-hidden="true">☀</span>
+  </div>
+  <h1>Command Reference</h1>
+  <p>dbt, Git &amp; Linux — descriptions and real-world examples</p>
+</header>
+
+<div class="layout">
+  <nav>
+    <h3>Overview</h3>
+    <a href="#graph-section">Command explorer</a>
+
+    <h3>dbt</h3>
+    <a href="#dbt-run">run</a>
+    <a href="#dbt-build">build</a>
+    <a href="#dbt-test">test</a>
+    <a href="#dbt-compile">compile</a>
+    <a href="#dbt-seed">seed</a>
+    <a href="#dbt-snapshot">snapshot</a>
+    <a href="#dbt-deps">deps</a>
+    <a href="#dbt-debug">debug</a>
+    <a href="#dbt-docs">docs</a>
+    <a href="#dbt-ls">ls / source</a>
+    <a href="#dbt-util">Project Setup &amp; Utilities</a>
+
+    <h3>Git</h3>
+    <a href="#git-clone">clone / init</a>
+    <a href="#git-status">status / add</a>
+    <a href="#git-commit">commit</a>
+    <a href="#git-branch">branch / checkout</a>
+    <a href="#git-merge">merge / rebase</a>
+    <a href="#git-remote">push / pull / fetch</a>
+    <a href="#git-log">log / diff</a>
+    <a href="#git-stash">stash</a>
+    <a href="#git-reset">reset / revert</a>
+    <a href="#git-worktree">worktree / cherry-pick</a>
+    <a href="#git-inspect">Inspect &amp; Recover</a>
+    <a href="#git-files">Files, Tags, Remotes &amp; Config</a>
+
+    <h3>Linux</h3>
+    <a href="#lx-nav">Navigation</a>
+    <a href="#lx-files">Files &amp; dirs</a>
+    <a href="#lx-view">Viewing text</a>
+    <a href="#lx-search">Searching</a>
+    <a href="#lx-perm">Permissions</a>
+    <a href="#lx-proc">Processes</a>
+    <a href="#lx-net">Networking</a>
+    <a href="#lx-archive">Archives &amp; transfer</a>
+    <a href="#lx-disk">Disk &amp; system</a>
+    <a href="#lx-edit">Editing text</a>
+    <a href="#lx-text">Text processing</a>
+    <a href="#lx-misc">Shell helpers</a>
+    <a href="#lx-sys">System &amp; Services</a>
+    <a href="#lx-util">Everyday Utilities</a>
+  </nav>
+
+  <main>
+    <div class="search-wrap">
+      <input id="search" type="text" placeholder="Filter commands… (e.g. 'merge', 'grep', 'dbt run --select')" />
+      <span class="kbd-hint">/</span>
+    </div>
+    <div id="result-count"></div>
+
+    <!-- ============ COMMAND DROPDOWNS ============ -->
+    <section id="graph-section">
+      <h2>Command Explorer</h2>
+      <p class="graph-intro">
+        Many entries below bundle several related commands written with <code class="inline">/</code> between them.
+        Pick a <strong>category</strong>, then a <strong>group</strong>, then a <strong>command</strong> to see a
+        structured, step-by-step example.
+      </p>
+      <div class="dd-controls">
+        <div class="dd-field">
+          <label for="dd-cat">Category</label>
+          <select id="dd-cat" class="dd-select"></select>
+        </div>
+        <div class="dd-field">
+          <label for="dd-group">Group</label>
+          <select id="dd-group" class="dd-select"></select>
+        </div>
+        <div class="dd-field">
+          <label for="dd-cmd">Command</label>
+          <select id="dd-cmd" class="dd-select"></select>
+        </div>
+      </div>
+      <div class="example-panel" id="example-panel">
+        <div class="ep-empty">Select a command above to see a structured example.</div>
+      </div>
+    </section>
+
+    <!-- ============ CATEGORY TABS ============ -->
+    <div class="tabs" id="tabs" role="tablist" aria-label="Command categories">
+      <button class="tab" id="tab-dbt" role="tab" type="button" data-cat="dbt">dbt <span class="tab-count"></span></button>
+      <button class="tab" id="tab-git" role="tab" type="button" data-cat="git">Git <span class="tab-count"></span></button>
+      <button class="tab" id="tab-linux" role="tab" type="button" data-cat="linux">Linux <span class="tab-count"></span></button>
+    </div>
+
+    <!-- ============ DBT ============ -->
+    <section id="dbt-run">
+      <h2><span class="badge dbt">dbt</span> Running &amp; Building Models</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt run</code></h4>
+        <p class="desc">Executes the SQL for your models, creating or replacing tables/views in the target warehouse. The core command of any dbt project.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run only the defence combined mart and everything it depends on
+dbt run --select +int_rrd_defence_combined
+
+# Run a full refresh of an incremental model after a logic change
+dbt run --select rrd_agent_master_defense --full-refresh
+
+# Run against the UAT target before promoting to prod
+dbt run --target uat --select staging.*</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-build">
+        <h4><code class="inline">dbt build</code></h4>
+        <p class="desc">Runs models, tests, snapshots, and seeds together in dependency order. If a model's tests fail, downstream models are skipped — ideal for CI and scheduled jobs.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Nightly job: build the whole defence pipeline and stop on first failure
+dbt build --fail-fast
+
+# Build a single mart plus its upstream, with tests gating each step
+dbt build --select +rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-test">
+        <h4><code class="inline">dbt test</code></h4>
+        <p class="desc">Runs data-quality tests (schema tests like unique/not_null and singular SQL tests) against already-built models.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Validate grain and business rules on the agent base model
+dbt test --select int_rrd_defence_agent_base
+
+# Run a specific singular test that checks MTD &gt;= FTD
+dbt test --select test_mtd_gte_ftd_nop
+
+# Store failing rows in the warehouse for debugging
+dbt test --store-failures --select rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-compile">
+        <h4><code class="inline">dbt compile</code></h4>
+        <p class="desc">Renders Jinja/macros into raw SQL under <code class="inline">target/</code> without running it. Great for inspecting exactly what dbt will send to the warehouse.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># See the final SQL for a model to debug a macro
+dbt compile --select int_rrd_defence_combined
+# then open target/compiled/.../int_rrd_defence_combined.sql</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-seed">
+        <h4><code class="inline">dbt seed</code></h4>
+        <p class="desc">Loads CSV files from the <code class="inline">seeds/</code> directory into the warehouse as tables. Used for small, version-controlled lookup/reference data.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Load a designation-role mapping CSV into the warehouse
+dbt seed --select defence_designation_lookup
+
+# Reload all seeds, replacing existing tables
+dbt seed --full-refresh</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-snapshot">
+        <h4><code class="inline">dbt snapshot</code></h4>
+        <p class="desc">Captures slowly changing dimensions (Type 2 history) by recording how rows change over time.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Track changes to agent geo-hierarchy assignments over time
+dbt snapshot --select defence_agent_hierarchy_snapshot</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-deps">
+        <h4><code class="inline">dbt deps</code></h4>
+        <p class="desc">Installs packages listed in <code class="inline">packages.yml</code> (e.g. dbt_utils) into <code class="inline">dbt_packages/</code>. Run after cloning or updating dependencies.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># First step after cloning the repo on a new machine
+dbt deps</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-debug">
+        <h4><code class="inline">dbt debug</code></h4>
+        <p class="desc">Checks your setup: profile, connection to the warehouse, and project validity. The first thing to run when something won't connect.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Confirm the UAT connection works before a deployment
+dbt debug --target uat</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-docs">
+        <h4><code class="inline">dbt docs generate</code> / <code class="inline">dbt docs serve</code></h4>
+        <p class="desc">Builds a browsable documentation site (lineage graph, column descriptions, tests) and serves it locally.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Generate docs then open the lineage DAG in a browser
+dbt docs generate
+dbt docs serve --port 8080</code></pre>
+      </div>
+
+      <div class="cmd" id="dbt-ls">
+        <h4><code class="inline">dbt ls</code> &amp; selection syntax</h4>
+        <p class="desc">Lists resources matching a selector without running them. Handy for verifying what a <code class="inline">--select</code> will touch.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># List every model downstream of the staging layer
+dbt ls --select staging.*+
+
+# Only models tagged 'defence' that are also marts
+dbt ls --select tag:defence,mart.*
+
+# Preview what a scheduled run will execute
+dbt ls --select +rrd_agent_master_defense --resource-type model</code></pre>
+      </div>
+    </section>
+
+    <section id="dbt-util">
+      <h2><span class="badge dbt">dbt</span> Project Setup &amp; Utilities</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt init</code> / <code class="inline">dbt clean</code> / <code class="inline">dbt parse</code></h4>
+        <p class="desc"><strong>dbt init</strong> Scaffolds a new dbt project and walks you through creating a connection profile. <strong>dbt clean</strong> Deletes the folders listed under clean-targets in dbt_project.yml, usually target/ and dbt_packages/. <strong>dbt parse</strong> Parses the project and writes target/manifest.json without connecting to the warehouse. Quick way to catch YAML and Jinja errors.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create a new project in a new folder
+dbt init my_project
+# Scaffold without touching your existing profiles.yml
+dbt init my_project --skip-profile-setup
+# Remove compiled artifacts and installed packages
+dbt clean
+# Start from a clean slate, then reinstall packages
+dbt clean &amp;&amp; dbt deps
+# Validate the project structure and refs
+dbt parse
+# Ignore the partial-parse cache after changing dbt_project.yml
+dbt parse --no-partial-parse</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt show</code></h4>
+        <p class="desc">Previews the result of a model or an inline query in the terminal without materializing anything.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Peek at 10 rows from a model
+dbt show --select rrd_agent_master_defense --limit 10
+# Run an ad-hoc query with ref()
+dbt show --inline "select count(*) as n from {{ ref('int_rrd_defence_combined') }}"</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt retry</code> / <code class="inline">dbt clone</code></h4>
+        <p class="desc"><strong>dbt retry</strong> Re-runs the previous dbt command, starting from the nodes that failed or were skipped (dbt 1.6+). <strong>dbt clone</strong> Creates copies of nodes from a previous run&#x27;s state as views or tables in your target schema (dbt 1.6+). Useful for cheap dev environments.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Resume after a failed build without redoing the successful models
+dbt retry
+# Clone prod models into your dev schema using saved prod artifacts
+dbt clone --state prod-artifacts --select rrd_agent_master_defense</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">dbt run-operation</code></h4>
+        <p class="desc">Runs a macro directly from the command line, for example to grant permissions or clean up old tables.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run a macro with no arguments
+dbt run-operation grant_select_on_marts
+# Pass arguments to the macro as YAML
+dbt run-operation grant_select --args '{role: reporting}'</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ GIT ============ -->
+    <section id="git-clone">
+      <h2><span class="badge git">git</span> Git Version Control</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git clone</code> / <code class="inline">git init</code></h4>
+        <p class="desc">Copies a remote repository to your machine, or initializes a brand-new repo in the current folder.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Clone the team's dbt project
+git clone git@github.com:acme/seller-app-defence.git
+
+# Start tracking an existing folder with Git
+cd my-project &amp;&amp; git init</code></pre>
+      </div>
+
+      <div class="cmd" id="git-status">
+        <h4><code class="inline">git status</code> / <code class="inline">git add</code></h4>
+        <p class="desc">Shows which files changed, and stages specific files for the next commit. Prefer naming files over <code class="inline">git add .</code> to avoid committing unrelated changes.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>git status
+
+# Stage just the two models you edited
+git add models/mart/rrd_agent_master_defense.sql models/mart/schema.yml</code></pre>
+      </div>
+
+      <div class="cmd" id="git-commit">
+        <h4><code class="inline">git commit</code></h4>
+        <p class="desc">Records staged changes as a snapshot with a message describing the change.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Commit with a clear, scoped message
+git commit -m "fix: correct MTD/FTD grain in defence agent base model"</code></pre>
+      </div>
+
+      <div class="cmd" id="git-branch">
+        <h4><code class="inline">git branch</code> / <code class="inline">git checkout</code> / <code class="inline">git switch</code></h4>
+        <p class="desc">Creates, lists, and moves between branches. Branches keep feature work isolated from <code class="inline">main</code>.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create and switch to a feature branch in one step
+git switch -c feature/defence-combined-mart
+
+# List all branches, see the current one
+git branch -a
+
+# Go back to main
+git switch main</code></pre>
+      </div>
+
+      <div class="cmd" id="git-merge">
+        <h4><code class="inline">git merge</code> / <code class="inline">git rebase</code></h4>
+        <p class="desc">Integrates changes from one branch into another. <code class="inline">merge</code> keeps history; <code class="inline">rebase</code> replays commits for a linear history.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Merge a finished feature into main
+git switch main &amp;&amp; git merge feature/defence-combined-mart
+
+# Rebase your branch onto the latest main before a PR
+git switch feature/defence-combined-mart &amp;&amp; git rebase main</code></pre>
+      </div>
+
+      <div class="cmd" id="git-remote">
+        <h4><code class="inline">git push</code> / <code class="inline">git pull</code> / <code class="inline">git fetch</code></h4>
+        <p class="desc">Syncs commits with the remote. <code class="inline">fetch</code> downloads without merging; <code class="inline">pull</code> fetches + merges; <code class="inline">push</code> uploads your commits.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Push a new branch and set upstream tracking
+git push -u origin feature/defence-combined-mart
+
+# Get the latest main without touching your working copy
+git fetch origin
+
+# Update your current branch from the remote
+git pull</code></pre>
+      </div>
+
+      <div class="cmd" id="git-log">
+        <h4><code class="inline">git log</code> / <code class="inline">git diff</code></h4>
+        <p class="desc">Views commit history and inspects exactly what changed between versions or in your working tree.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Compact, graphical history
+git log --oneline --graph --decorate -15
+
+# See unstaged changes to a model
+git diff models/mart/rrd_agent_master_defense.sql
+
+# Compare two branches
+git diff main..feature/defence-combined-mart</code></pre>
+      </div>
+
+      <div class="cmd" id="git-stash">
+        <h4><code class="inline">git stash</code></h4>
+        <p class="desc">Temporarily shelves uncommitted changes so you can switch context, then restores them later.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Stash WIP to quickly fix a bug on main
+git stash push -m "wip defence mart"
+git switch main
+# ...fix...
+git switch feature/defence-combined-mart &amp;&amp; git stash pop</code></pre>
+      </div>
+
+      <div class="cmd" id="git-reset">
+        <h4><code class="inline">git reset</code> / <code class="inline">git revert</code></h4>
+        <p class="desc">Undoes changes. <code class="inline">revert</code> creates a new commit that reverses another (safe for shared branches); <code class="inline">reset</code> moves the branch pointer (use with care).</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Safely undo a pushed commit by adding a reversing commit
+git revert a1b2c3d
+
+# Unstage a file but keep the edits
+git reset HEAD models/mart/schema.yml
+
+# Discard the last commit but keep changes in working tree
+git reset --soft HEAD~1</code></pre>
+      </div>
+
+      <div class="cmd" id="git-worktree">
+        <h4><code class="inline">git worktree</code> / <code class="inline">git cherry-pick</code></h4>
+        <p class="desc"><code class="inline">worktree</code> checks out multiple branches in separate folders at once; <code class="inline">cherry-pick</code> copies a single commit onto the current branch.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Work on a hotfix without disturbing your main checkout
+git worktree add ../hotfix-dir -b hotfix/urgent main
+
+# Apply just one commit from another branch
+git cherry-pick a1b2c3d</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ LINUX ============ -->
+    <section id="git-inspect">
+      <h2><span class="badge git">git</span> Inspect &amp; Recover</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git show</code> / <code class="inline">git blame</code></h4>
+        <p class="desc"><strong>git show</strong> Displays a commit (message and diff) or a file as it was at a given commit. <strong>git blame</strong> Shows who last changed each line of a file and in which commit.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Show the latest commit
+git show HEAD
+# Summarise files changed in a commit
+git show --stat a1b2c3d
+# View a file as it was two commits ago
+git show HEAD~2:models/mart/schema.yml
+# Annotate a whole file
+git blame models/mart/rrd_agent_master_defense.sql
+# Limit to lines 40-60 and ignore whitespace changes
+git blame -w -L 40,60 models/mart/rrd_agent_master_defense.sql</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git reflog</code> / <code class="inline">git bisect</code></h4>
+        <p class="desc"><strong>git reflog</strong> Lists where HEAD and branches have pointed recently. Lets you recover commits after a bad reset, rebase or deleted branch. <strong>git bisect</strong> Binary-searches your history to find the commit that introduced a bug.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># See recent HEAD movements
+git reflog
+# Recreate a lost branch from a reflog entry
+git branch recovered HEAD@{3}
+# Start and mark the current commit as broken
+git bisect start
+git bisect bad
+# Mark a known-good commit; Git checks out the midpoint
+git bisect good v1.2.0
+# Automate the search with a test script
+git bisect run ./scripts/check.sh
+# Finish and return to your branch
+git bisect reset</code></pre>
+      </div>
+    </section>
+
+    <section id="git-files">
+      <h2><span class="badge git">git</span> Files, Tags, Remotes &amp; Config</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">git restore</code> / <code class="inline">git rm</code> / <code class="inline">git mv</code></h4>
+        <p class="desc"><strong>git restore</strong> Discards working-tree changes or unstages files. Replaces the file-level uses of git checkout and git reset. <strong>git rm</strong> Removes a file from the working tree and the index. <strong>git mv</strong> Renames or moves a file and stages the change in one step.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Discard unstaged edits to a file
+git restore models/mart/schema.yml
+# Unstage a file but keep the edits
+git restore --staged models/mart/schema.yml
+# Bring back a file from an earlier commit
+git restore --source=HEAD~1 models/mart/schema.yml
+# Stop tracking a file but keep it on disk
+git rm --cached .env
+# Delete a tracked folder
+git rm -r old_models/
+# Rename a model file
+git mv models/staging/stg_agent.sql models/staging/stg_defence_agent.sql</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git tag</code> / <code class="inline">git remote</code></h4>
+        <p class="desc"><strong>git tag</strong> Marks a specific commit, usually for a release. <strong>git remote</strong> Manages the remote repositories your clone talks to.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Create an annotated tag
+git tag -a v1.4.0 -m "Release 1.4.0"
+# List tags
+git tag -l "v1.*"
+# Push one tag to the remote
+git push origin v1.4.0
+# Delete a tag locally
+git tag -d v1.4.0
+# Show remotes and their URLs
+git remote -v
+# Add a second remote called upstream
+git remote add upstream git@github.com:acme/seller-app-defence.git
+# Change the URL of origin
+git remote set-url origin git@github.com:acme/new-name.git
+# Drop local references to branches deleted on the remote
+git remote prune origin</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">git config</code> / <code class="inline">git clean</code></h4>
+        <p class="desc"><strong>git config</strong> Reads and sets Git options at the repo, user (--global) or system level. <strong>git clean</strong> Deletes untracked files. Deleted files cannot be recovered, so preview first.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Set your identity
+git config --global user.name "Your Name"
+git config --global user.email you@example.com
+# Create a shortcut
+git config --global alias.st status
+# See every setting and the file it came from
+git config --list --show-origin
+# Dry run: list what would be removed
+git clean -n -d
+# Remove untracked files and folders
+git clean -fd</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-nav">
+      <h2><span class="badge linux">linux</span> Navigation</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">pwd</code> / <code class="inline">cd</code> / <code class="inline">ls</code></h4>
+        <p class="desc">Print the current directory, change directories, and list contents.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>pwd                      # where am I?
+cd dbt/defence_agent_master
+ls -lah                  # long listing, human sizes, including hidden files
+cd -                     # jump back to the previous directory</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-files">
+      <h2><span class="badge linux">linux</span> Files &amp; Directories</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">mkdir</code> / <code class="inline">cp</code> / <code class="inline">mv</code> / <code class="inline">rm</code> / <code class="inline">touch</code></h4>
+        <p class="desc">Create, copy, move/rename, delete files and folders.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>mkdir -p models/intermediate      # create nested dirs, no error if exists
+cp profiles.yml profiles.yml.bak  # back up before editing
+mv old_model.sql staging/stg_model.sql
+touch models/new_model.sql        # create an empty file
+rm -i target/*.log                # delete with confirmation prompt
+rm -rf target/                    # remove a dir tree (double-check the path!)</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-view">
+      <h2><span class="badge linux">linux</span> Viewing Text</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">cat</code> / <code class="inline">less</code> / <code class="inline">head</code> / <code class="inline">tail</code></h4>
+        <p class="desc">Print, page through, or peek at the start/end of files. <code class="inline">tail -f</code> follows a growing log.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>cat dbt_project.yml
+less target/compiled/.../model.sql     # q to quit
+head -20 docs/SOURCE\ DDL.txt
+tail -f logs/dbt.log                    # live-follow a running dbt job</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-search">
+      <h2><span class="badge linux">linux</span> Searching</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">grep</code> / <code class="inline">find</code></h4>
+        <p class="desc"><code class="inline">grep</code> searches file contents; <code class="inline">find</code> locates files by name, type, or age.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Find every model that references a source table
+grep -rn "rrd_defence_agents" models/
+
+# Find all SQL files modified in the last day
+find models/ -name "*.sql" -mtime -1
+
+# Find and delete compiled artifacts
+find target/ -name "*.sql" -delete</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-perm">
+      <h2><span class="badge linux">linux</span> Permissions &amp; Ownership</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">chmod</code> / <code class="inline">chown</code></h4>
+        <p class="desc">Change file permissions and ownership. Common when a deployment script needs to be executable.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Make the deployment script executable
+chmod +x defence_agent_master_deployement.sh
+
+# Give the service account ownership of the logs dir
+sudo chown -R dbtuser:dbtuser /opt/dbt/logs</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-proc">
+      <h2><span class="badge linux">linux</span> Processes</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">ps</code> / <code class="inline">top</code> / <code class="inline">kill</code> / <code class="inline">&amp;</code> / <code class="inline">nohup</code></h4>
+        <p class="desc">Inspect running processes, monitor resource usage, and stop or background jobs.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Find a stuck dbt process
+ps aux | grep dbt
+
+# Kill it by PID
+kill -9 48213
+
+# Run a long dbt build in the background, surviving logout
+nohup dbt build --target prod &gt; run.log 2&gt;&amp;1 &amp;</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-net">
+      <h2><span class="badge linux">linux</span> Networking</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">curl</code> / <code class="inline">wget</code> / <code class="inline">ssh</code> / <code class="inline">ping</code></h4>
+        <p class="desc">Make HTTP requests, download files, connect to remote servers, and test connectivity.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Test a warehouse/API endpoint is reachable
+curl -I https://my-warehouse.example.com
+
+# SSH into the deployment server
+ssh dbtuser@etl-prod-01
+
+# Download a file
+wget https://example.com/reference-data.csv</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-archive">
+      <h2><span class="badge linux">linux</span> Archives &amp; Transfer</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">tar</code> / <code class="inline">gzip</code> / <code class="inline">scp</code> / <code class="inline">rsync</code></h4>
+        <p class="desc">Bundle/compress files and move them between machines efficiently.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Archive and compress the project for backup
+tar -czf defence_backup.tar.gz dbt/defence_agent_master
+
+# Copy artifacts to a remote host
+scp defence_backup.tar.gz dbtuser@etl-prod-01:/backups/
+
+# Mirror a folder to the server, only sending changes
+rsync -avz --delete ./target/ dbtuser@etl-prod-01:/opt/dbt/target/</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-disk">
+      <h2><span class="badge linux">linux</span> Disk &amp; System</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">df</code> / <code class="inline">du</code> / <code class="inline">free</code> / <code class="inline">env</code> / <code class="inline">export</code></h4>
+        <p class="desc">Check disk space, directory sizes, memory, and manage environment variables.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code>df -h                     # free space per mounted filesystem
+du -sh target/            # how big is the compiled output?
+free -h                   # available RAM
+
+# Set an env var a dbt profile reads (e.g. a password)
+export DBT_PWD='••••••'
+env | grep DBT            # confirm it's set</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-edit">
+      <h2><span class="badge linux">linux</span> Editing Text</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">nano</code> / <code class="inline">vim</code></h4>
+        <p class="desc">Edit files directly in the terminal. <code class="inline">nano</code> is beginner-friendly (shortcuts shown at the bottom); <code class="inline">vim</code> is powerful and modal, found on nearly every server.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Open (or create) a file in nano, then Ctrl+O to save, Ctrl+X to quit
+nano models/mart/schema.yml
+
+# Jump straight to line 42 in nano
+nano +42 logs/dbt.log
+
+# Open a file in vim; press i to insert, Esc then :wq to save &amp; quit
+vim profiles.yml
+
+# Edit a file as root when you forgot sudo
+sudo nano /etc/hosts</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-text">
+      <h2><span class="badge linux">linux</span> Text Processing</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">sed</code> / <code class="inline">awk</code> / <code class="inline">cut</code> / <code class="inline">sort</code> / <code class="inline">uniq</code> / <code class="inline">wc</code></h4>
+        <p class="desc">The classic pipeline toolkit for transforming, slicing, and counting text and CSV data.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Replace a schema name across a file (in-place, with a .bak backup)
+sed -i.bak 's/old_schema/new_schema/g' models/sources.yml
+
+# Print the 2nd comma-separated column of a CSV
+awk -F',' '{print $2}' seeds/agents.csv
+
+# Pull columns 1 and 3 from a tab-separated file
+cut -f1,3 export.tsv
+
+# Sort rows, drop duplicates, and count how many remain
+sort agents.csv | uniq | wc -l
+
+# Count lines in every SQL model
+wc -l models/**/*.sql</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-misc">
+      <h2><span class="badge linux">linux</span> Shell Helpers</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">man</code> / <code class="inline">which</code> / <code class="inline">history</code> / <code class="inline">ln</code> / <code class="inline">xargs</code></h4>
+        <p class="desc">Everyday shell conveniences: read docs, locate binaries, reuse past commands, link files, and feed arguments into other commands.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Read the manual for a command (q to quit)
+man rsync
+
+# Find which binary runs when you type 'dbt'
+which dbt
+
+# Re-run a previous command by its history number
+history | grep "dbt run"
+!512
+
+# Create a symlink to a shared profiles file
+ln -s /opt/dbt/profiles.yml ~/.dbt/profiles.yml
+
+# Delete every .log file found, passing them to rm in batches
+find . -name "*.log" | xargs rm -f</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-sys">
+      <h2><span class="badge linux">linux</span> System &amp; Services</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">sudo</code> / <code class="inline">whoami / uname / uptime / date</code></h4>
+        <p class="desc"><strong>sudo</strong> Runs a command with another user&#x27;s privileges, normally root. <strong>whoami / uname / uptime / date</strong> Quick facts about the current user, OS, machine load and time.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Run one command as root
+sudo apt update
+# Run as a different user
+sudo -u postgres psql
+# Re-run the previous command as root
+sudo !!
+# Current user
+whoami
+# Kernel and architecture
+uname -a
+# How long the machine has been up, and load average
+uptime
+# ISO date for filenames
+date +%F</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">systemctl</code> / <code class="inline">journalctl</code></h4>
+        <p class="desc"><strong>systemctl</strong> Starts, stops and inspects services on systems that use systemd. <strong>journalctl</strong> Reads logs collected by systemd.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Check a service
+systemctl status nginx
+# Restart it
+sudo systemctl restart nginx
+# Start now and on every boot
+sudo systemctl enable --now nginx
+# Logs for one service from the last hour
+journalctl -u nginx --since "1 hour ago"
+# Follow logs live
+journalctl -u nginx -f
+# Only errors from the current boot
+journalctl -p err -b</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">crontab</code></h4>
+        <p class="desc">Schedules commands to run at fixed times.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># List your jobs
+crontab -l
+# Edit your jobs
+crontab -e
+# Example entry: nightly build at 02:00, logging output
+0 2 * * * cd /opt/dbt &amp;&amp; dbt build &gt;&gt; /var/log/dbt_nightly.log 2&gt;&amp;1</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">lsof</code> / <code class="inline">ss</code> / <code class="inline">watch</code></h4>
+        <p class="desc"><strong>lsof</strong> Lists open files, including network sockets, and the process that owns each. <strong>ss</strong> Shows network sockets. Modern replacement for netstat on Linux. <strong>watch</strong> Re-runs a command every few seconds and shows the output. Not installed by default on macOS.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Which process is using port 8080?
+lsof -i :8080
+# Files opened by a given process
+lsof -p 1234
+# Listening TCP/UDP ports with process names
+sudo ss -tulpn
+# Watch free disk space every 5 seconds
+watch -n 5 df -h</code></pre>
+      </div>
+    </section>
+
+    <section id="lx-util">
+      <h2><span class="badge linux">linux</span> Everyday Utilities</h2>
+
+      <div class="cmd">
+        <h4><code class="inline">tree</code> / <code class="inline">stat</code></h4>
+        <p class="desc"><strong>tree</strong> Prints a directory as an indented tree. Install with brew or apt if missing. <strong>stat</strong> Shows detailed file info: size, permissions, owner, timestamps.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Two levels deep
+tree -L 2
+# Skip noisy folders
+tree -I "target|dbt_packages|.git"
+# Full details
+stat run.sh
+# Octal permissions and owner (Linux)
+stat -c '%a %U' run.sh</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">diff</code> / <code class="inline">tee</code></h4>
+        <p class="desc"><strong>diff</strong> Compares two files or folders line by line. <strong>tee</strong> Copies input to both the screen and a file.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Unified diff of two files
+diff -u old.sql new.sql
+# List files that differ between two folders
+diff -rq models_old/ models/
+# Watch a build and save the log
+dbt build 2&gt;&amp;1 | tee build.log
+# Append to a root-owned file
+echo "10.0.0.5 db.internal" | sudo tee -a /etc/hosts</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">jq</code></h4>
+        <p class="desc">Parses and filters JSON on the command line.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Pretty-print a JSON file
+jq . target/run_results.json
+# List dbt nodes that errored
+jq -r '.results[] | select(.status=="error") | .unique_id' target/run_results.json</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">zip / unzip</code></h4>
+        <p class="desc">Creates and extracts .zip archives, which Windows users can open directly.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Zip a folder
+zip -r backup.zip models/
+# List contents without extracting
+unzip -l backup.zip
+# Extract into a folder
+unzip backup.zip -d restore/</code></pre>
+      </div>
+
+      <div class="cmd">
+        <h4><code class="inline">alias</code> / <code class="inline">dig</code></h4>
+        <p class="desc"><strong>alias</strong> Defines a shortcut for a longer command. Add it to ~/.zshrc or ~/.bashrc to keep it. <strong>dig</strong> Queries DNS records.</p>
+        <p class="label">Real-world example</p>
+        <pre class="example"><code># Shortcut for a detailed listing
+alias ll='ls -lah'
+# Shortcut for git status
+alias gs='git status'
+# Remove an alias
+unalias gs
+# Just the IP address
+dig example.com +short
+# Mail servers
+dig MX example.com</code></pre>
+      </div>
+    </section>
+
+    <p id="noresults" class="hidden" style="color:var(--muted);text-align:center;padding:2rem;">No commands match your filter.</p>
+  </main>
+</div>
+
+<button id="to-top" title="Back to top" aria-label="Back to top">&uarr;</button>
+
+<script src="script.js"></script>
+</body>
+</html>

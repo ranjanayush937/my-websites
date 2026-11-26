@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website - File Explorer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px 15px;
+            color: #222;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 15px #00000012;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        #files {
+            list-style: none;
+            padding: 0;
+        }
+
+        #files li {
+            margin: 10px 0;
+        }
+
+        #files a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: #f7f9fc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            color: #0969da;
+            text-decoration: none;
+            transition: 0.2s;
+            overflow-wrap: anywhere;
+        }
+
+        #files a:hover {
+            background: #eaf2ff;
+            border-color: #0969da;
+            transform: translateX(3px);
+        }
+
+        .file-icon {
+            font-size: 20px;
+        }
+
+        .folder {
+            color: #666;
+            font-size: 12px;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        #status {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        .refresh {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 7px;
+            background: #0969da;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .refresh:hover {
+            background: #0757b5;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📁 My Website</h1>
+
+    <p class="subtitle">
+        Browse and open all HTML pages in my GitHub repository.
+    </p>
+
+    <button class="refresh" onclick="loadFiles()">
+        ↻ Refresh File List
+    </button>
+
+    <p id="status">Loading files...</p>
+
+    <ul id="files"></ul>
+
+</div>
+
+<script>
+
+    const username = "ranjanayush937";
+    const repo = "my-website";
+    const branch = "main";
+
+    const apiURL =
+        `https://api.github.com/repos/${username}/${repo}/git/trees/${branch}?recursive=1`;
+
+    const websiteURL =
+        `https://${username}.github.io/${repo}/`;
+
+    async function loadFiles() {
+
+        const container = document.getElementById("files");
+        const status = document.getElementById("status");
+
+        container.innerHTML = "";
+        status.textContent = "Loading files...";
+
+        try {
+
+            const response = await fetch(apiURL);
+
+            if (!response.ok) {
+                throw new Error("Unable to fetch repository files.");
+            }
+
+            const data = await response.json();
+
+            if (data.truncated) {
+                throw new Error("Repository is too large to list completely.");
+            }
+
+            const htmlFiles = data.tree.filter(file =>
+                file.type === "blob" &&
+                file.path.toLowerCase().endsWith(".html") &&
+                file.path.toLowerCase() !== "index.html"
+            );
+
+            htmlFiles.sort((a, b) =>
+                a.path.localeCompare(b.path)
+            );
+
+            if (htmlFiles.length === 0) {
+                status.textContent = "No additional HTML files found.";
+                return;
+            }
+
+            htmlFiles.forEach(file => {
+
+                const li = document.createElement("li");
+                const link = document.createElement("a");
+
+                const icon = document.createElement("span");
+                icon.className = "file-icon";
+                icon.textContent = "📄";
+
+                const name = document.createElement("span");
+                name.textContent = file.path;
+
+                const folder = document.createElement("span");
+                folder.className = "folder";
+
+                folder.textContent =
+                    file.path.includes("/")
+                    ? file.path.substring(0, file.path.lastIndexOf("/"))
+                    : "Root";
+
+                // Navigate to the published HTML page
+                link.href = websiteURL +
+                    file.path.split("/").map(encodeURIComponent).join("/");
+
+                link.appendChild(icon);
+                link.appendChild(name);
+                link.appendChild(folder);
+
+                li.appendChild(link);
+                container.appendChild(li);
+
+            });
+
+            status.textContent =
+                `Found ${htmlFiles.length} HTML page(s). Click any file to open it.`;
+
+        } catch (error) {
+
+            status.textContent = error.message;
+            status.className = "error";
+
+        }
+    }
+
+    loadFiles();
+
+</script>
+
+</body>
+</html>

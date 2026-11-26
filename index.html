@@ -79,9 +79,11 @@ function render() {
   count.textContent = shown.length + " of " + files.length + " files";
   if (!shown.length) return state("No files match your search.");
   grid.replaceChildren(...shown.map(path => {
-    const i = path.lastIndexOf("/");
-    const name = path.slice(i + 1), dir = i > -1 ? path.slice(0, i) : "/";
-    const dot = name.lastIndexOf(".");
+    const isSite = path.endsWith("/");
+    const trimmed = isSite ? path.slice(0, -1) : path;
+    const i = trimmed.lastIndexOf("/");
+    const name = trimmed.slice(i + 1), dir = i > -1 ? trimmed.slice(0, i) : "/";
+    const dot = isSite ? -1 : name.lastIndexOf(".");
     const a = document.createElement("a");
     a.className = "card";
     a.href = SITE + enc(path);
@@ -89,7 +91,7 @@ function render() {
     a.rel = "noopener";
     const icon = document.createElement("div");
     icon.className = "icon";
-    icon.textContent = dot > 0 ? name.slice(dot + 1, dot + 5) : "file";
+    icon.textContent = isSite ? "site" : dot > 0 ? name.slice(dot + 1, dot + 5) : "file";
     const text = document.createElement("div");
     text.className = "text";
     const n = document.createElement("div");
@@ -108,9 +110,18 @@ async function init() {
     if (!repo.default_branch) throw new Error(repo.message || "repo not found");
     const tree = await (await fetch(API + "/git/trees/" + encodeURIComponent(repo.default_branch) + "?recursive=1")).json();
     if (!tree.tree) throw new Error(tree.message || "no files");
-    files = tree.tree
-      .filter(t => t.type === "blob" && t.path !== "index.html")
-      .map(t => t.path);
+    const paths = tree.tree.filter(t => t.type === "blob").map(t => t.path);
+    // A folder with its own index.html is a site: show one card for the folder
+    // and hide the files inside it (its CSS, JS, images).
+    const sites = paths
+      .filter(p => p.endsWith("/index.html"))
+      .map(p => p.slice(0, -"index.html".length))
+      .sort()
+      .filter((d, i, all) => !all.slice(0, i).some(o => d.startsWith(o)));
+    files = paths
+      .filter(p => p !== "index.html" && !sites.some(d => p.startsWith(d)))
+      .concat(sites)
+      .sort();
     render();
   } catch (err) {
     count.textContent = "";

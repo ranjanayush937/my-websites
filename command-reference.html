@@ -522,6 +522,82 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  /* ---------- Category tabs ---------- */
+  .tabs {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 80;
+    display: flex;
+    gap: .4rem;
+    margin: 0 0 1.4rem;
+    padding: .6rem 0;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .65rem 1rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom: 3px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .tab:hover { color: var(--text); background: var(--panel-alt); }
+  .tab .tab-count {
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .05rem .5rem;
+    border-radius: 999px;
+    background: var(--panel-alt);
+    color: var(--muted);
+  }
+  .tab.active { color: var(--text); background: var(--panel-alt); }
+  .tab[data-cat="dbt"].active   { border-bottom-color: #ff8a6b; }
+  .tab[data-cat="git"].active   { border-bottom-color: var(--accent-3); }
+  .tab[data-cat="linux"].active { border-bottom-color: var(--accent-2); }
+  .tab-hidden { display: none !important; }
+  /* Category headers only matter when search shows several categories at once */
+  .cat-head { display: none; }
+  body.searching .cat-head { display: flex; cursor: default; }
+  body.searching .cat-head .sec-twist { display: none; }
+  body.searching .cat-block.tab-hidden { display: block !important; }
+  body.searching .cat-block.no-match { display: none !important; }
+  body.searching .tabs { opacity: .5; pointer-events: none; }
+  .cat-body { padding-left: 0; border-left: 0; margin-left: 0; }
+
+  /* ---------- Readable code examples ---------- */
+  :root { --comment: #7ee0a0; --prompt: #6b7686; }
+  html[data-theme="light"] { --comment: #1a7f37; --prompt: #8a94a3; }
+  pre { padding: 1rem 1.2rem; }
+  pre.example code { display: block; line-height: 1.7; }
+  pre.example .ln { display: block; white-space: pre; }
+  pre.example .note {
+    margin: 1.05rem 0 .3rem;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: .86rem;
+    font-weight: 600;
+    color: var(--comment);
+  }
+  pre.example .ln:first-child { margin-top: 0; }
+  pre.example .cmdline { font-size: .9rem; color: var(--code-text); }
+  .ex-step { margin-bottom: 1.15rem; }
+  .ex-step .ex-note { color: var(--text); font-size: .9rem; font-weight: 500; }
+  .ex-step .ex-cmd { padding-top: .6rem; padding-bottom: .6rem; line-height: 1.6; }
+  @media (max-width: 600px) {
+    .tab { padding: .55rem .4rem; font-size: .85rem; }
+    .tab .tab-count { display: none; }
+  }
   @media (max-width: 820px) {
     .layout { flex-direction: column; }
     nav { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
@@ -632,6 +708,13 @@
         <div class="ep-empty">Select a command above to see a structured example.</div>
       </div>
     </section>
+
+    <!-- ============ CATEGORY TABS ============ -->
+    <div class="tabs" id="tabs" role="tablist" aria-label="Command categories">
+      <button class="tab" id="tab-dbt" role="tab" type="button" data-cat="dbt">dbt <span class="tab-count"></span></button>
+      <button class="tab" id="tab-git" role="tab" type="button" data-cat="git">Git <span class="tab-count"></span></button>
+      <button class="tab" id="tab-linux" role="tab" type="button" data-cat="linux">Linux <span class="tab-count"></span></button>
+    </div>
 
     <!-- ============ DBT ============ -->
     <section id="dbt-run">
@@ -2136,6 +2219,12 @@ dig MX example.com</code></pre>
         }
         anc = anc.parentElement;
       }
+      // Switch to the tab that owns this card.
+      const owner = card.closest('.cat-block');
+      if (owner && window.__setTab) {
+        const c = ['dbt', 'git', 'linux'].find(x => owner.classList.contains('cat-' + x));
+        if (c) window.__setTab(c);
+      }
 
       // Force the card painted even if reveal-on-scroll left it at opacity:0.
       // Also reveal every card in the target section so layout heights are final
@@ -2330,6 +2419,91 @@ dig MX example.com</code></pre>
     });
   })();
 
+  /* ---------- Category tabs ---------- */
+  (function categoryTabs() {
+    const CATS = ['dbt', 'git', 'linux'];
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const blocks = {};
+    CATS.forEach(c => { const b = document.querySelector('.cat-block.cat-' + c); if (b) blocks[c] = b; });
+    // Tag each sidebar group with its category so only the active one shows.
+    let cur = null;
+    document.querySelectorAll('nav > *').forEach(el => {
+      if (el.tagName === 'H3') {
+        const t = el.textContent.trim().toLowerCase();
+        cur = blocks[t] ? t : null;
+      }
+      if (cur) el.dataset.cat = cur;
+    });
+    tabs.forEach(t => {
+      const b = blocks[t.dataset.cat];
+      const n = t.querySelector('.tab-count');
+      if (b && n) n.textContent = b.querySelectorAll('.cmd').length;
+    });
+    function setTab(cat) {
+      if (!blocks[cat]) return;
+      tabs.forEach(t => {
+        const on = t.dataset.cat === cat;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+      });
+      CATS.forEach(c => { if (blocks[c]) blocks[c].classList.toggle('tab-hidden', c !== cat); });
+      document.querySelectorAll('nav [data-cat]').forEach(el => el.classList.toggle('tab-hidden', el.dataset.cat !== cat));
+      try { localStorage.setItem('command-reference-tab', cat); } catch {}
+    }
+    window.__setTab = setTab;
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => {
+        setTab(t.dataset.cat);
+        // If the reader is deep in the page, bring the top of the new tab into view.
+        const top = blocks[t.dataset.cat].getBoundingClientRect().top + window.scrollY - 150;
+        if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+      });
+      t.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus(); setTab(next.dataset.cat);
+      });
+    });
+    // While searching, show matches from every category.
+    function syncSearch() {
+      const searching = search.value.trim() !== '';
+      document.body.classList.toggle('searching', searching);
+      CATS.forEach(c => {
+        const b = blocks[c];
+        if (b) b.classList.toggle('no-match', searching && !b.querySelector('.cmd:not(.hidden)'));
+      });
+    }
+    search.addEventListener('input', syncSearch);
+    search.addEventListener('keyup', syncSearch);
+    // Pick the starting tab: URL hash > last used > dbt.
+    function fromHash() {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const el = id && document.getElementById(id);
+      const owner = el && el.closest('.cat-block');
+      const c = owner && CATS.find(x => owner.classList.contains('cat-' + x));
+      if (c) { setTab(c); setTimeout(() => el.scrollIntoView(), 50); }
+    }
+    let saved = null;
+    try { saved = localStorage.getItem('command-reference-tab'); } catch {}
+    setTab(blocks[saved] ? saved : 'dbt');
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+  })();
+  /* ---------- Readable examples: separate comments from commands ---------- */
+  (function formatExamples() {
+    document.querySelectorAll('pre.example code').forEach(code => {
+      const lines = code.textContent.replace(/\s+$/, '').split('\n');
+      code.textContent = '';
+      lines.forEach(line => {
+        if (!line.trim()) return; // spacing now comes from CSS margins
+        const d = document.createElement('span');
+        d.className = /^\s*#/.test(line) ? 'ln note' : 'ln cmdline';
+        d.textContent = line;
+        code.appendChild(d);
+      });
+    });
+  })();
   /* ---------- Reveal cards on scroll ---------- */
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduceMotion) {

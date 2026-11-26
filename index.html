@@ -51,7 +51,7 @@
   <h1>My Websites</h1>
   <p class="sub" id="count">Loading...</p>
   <div class="search">
-    <input id="q" type="search" placeholder="Search files..." aria-label="Search files" autocomplete="off">
+    <input id="q" type="search" placeholder="Search websites..." aria-label="Search websites" autocomplete="off">
   </div>
   <div class="grid" id="grid"></div>
 </div>
@@ -76,8 +76,8 @@ function state(text) {
 function render() {
   const term = q.value.trim().toLowerCase();
   const shown = files.filter(f => f.toLowerCase().includes(term));
-  count.textContent = shown.length + " of " + files.length + " files";
-  if (!shown.length) return state("No files match your search.");
+  count.textContent = shown.length + " of " + files.length + " websites";
+  if (!shown.length) return state(files.length ? "No websites match your search." : "No websites found yet.");
   grid.replaceChildren(...shown.map(path => {
     const isSite = path.endsWith("/");
     const trimmed = isSite ? path.slice(0, -1) : path;
@@ -118,14 +118,14 @@ async function init() {
       .map(p => p.slice(0, -"index.html".length))
       .sort()
       .filter((d, i, all) => !all.slice(0, i).some(o => d.startsWith(o)));
-    files = paths
-      .filter(p => p !== "index.html" && !sites.some(d => p.startsWith(d)))
-      .concat(sites)
-      .sort();
+    // Standalone pages: .html files outside any site folder (not this index).
+    const pages = paths.filter(p =>
+      /\.html?$/i.test(p) && p !== "index.html" && !sites.some(d => p.startsWith(d)));
+    files = pages.concat(sites).sort();
     render();
   } catch (err) {
     count.textContent = "";
-    state("Could not load files: " + err.message);
+    state("Could not load websites: " + err.message);
   }
 }
 q.addEventListener("input", render);
